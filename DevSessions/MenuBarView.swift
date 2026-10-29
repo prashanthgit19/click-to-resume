@@ -6,21 +6,30 @@ struct MenuBarView: View {
     @ObservedObject private var controller = Phase0Controller.shared
 
     var body: some View {
-        Button("Refresh Widget") {
-            controller.refresh()
-        }
-        Button("Test Terminal Hand-off") {
-            controller.testResume()
-        }
+        Text(
+            controller.isScanning
+                ? "Scanning…"
+                : "\(controller.state?.sessions.count ?? 0) cached sessions"
+        )
+        .foregroundStyle(.secondary)
+
         Divider()
-        Button("Show Phase 0 Window") {
-            openWindow(id: "phase0")
+
+        Button("Open Sessions") {
+            openWindow(id: "sessions")
             NSApp.activate(ignoringOtherApps: true)
         }
+
+        Button("Refresh Now") {
+            controller.refresh()
+        }
+
         SettingsLink {
             Text("Settings…")
         }
+
         Divider()
+
         Button("Quit DevSessions") {
             NSApplication.shared.terminate(nil)
         }

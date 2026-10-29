@@ -2,37 +2,32 @@
 
 DevSessions is a macOS widget plus menu bar companion app that shows recently active OpenCode, Claude Code, Codex, Pi, and Oh My Pi sessions and resumes them in Terminal.
 
-Phase 0 is complete: the app, widget, App Group, deep link, and Terminal hand-off all run. Phase 1 adds the five-agent discovery core. The host app still uses the three-session demo cache until Phase 2 wires the scanner into the app.
+Phases 0–2 are complete: the app, widget, App Group, deep link, Terminal hand-off, five-agent discovery, real cache, scheduler, settings, and real resume paths are implemented.
 
 See `prd.txt` for the full product requirements.
 
-## What Phase 0 proves
+## What is implemented
 
-- A non-sandboxed host app and a sandboxed WidgetKit extension can share state through an App Group.
-- The widget can render sessions and deep-link back to the host app.
-- The host app can write a `.command` file and open it in Terminal without an Automation permission prompt.
-- The app can request launch-at-login and expose a refresh/settings shell.
-- The shared state and resume-command code are unit-checkable without Xcode.
+- Non-sandboxed menu bar host app + sandboxed WidgetKit extension sharing an App Group.
+- Five discovery adapters: OpenCode, Claude Code, Codex, Pi, and Oh My Pi.
+- Real scan → global recency cache → widget.
+- Real resume commands in Terminal with absolute CLI paths.
+- 1/3/7/14/30-day activity window, diagnostics, launch-at-login, and background refresh.
 
 ## Current validation status
 
-Phase 0 is complete and runtime-validated on this Mac:
+Phases 0–2 are runtime-validated on this Mac:
 
 - Signed app installed at `/Applications/DevSessions.app`.
 - App Group cache written successfully at `~/Library/Group Containers/67Z29VG25Z.com.devsessions.shared/DevSessions/state.json`.
-- Widget registered from the installed app and displays all three demo sessions.
-- Clicking a widget row opens Terminal in the test project directory.
-- `make verify` passes: core checks, plist lint, and host/widget type checks.
+- The host app scans real data and reports **200 cached sessions** on this machine.
+- The widget was re-registered from the Phase 2 app.
+- The widget list is a flat global recency order: no per-agent sections, quotas, or fairness rules.
+- `make verify` passes: core checks, plist lint, host/widget type checks, and the five-agent fixture suite.
+
+The real scan reports OpenCode 200 (cache cap), Claude 18, and Codex 24. Because OpenCode is heavily used here, the global top 200 is entirely OpenCode, which is the intended behavior. Pi has no saved sessions yet; Oh My Pi is installed but has not created `~/.omp` sessions yet.
 
 The local build uses a free Apple Development certificate and the team-prefixed macOS App Group convention. Public distribution still requires the paid Apple Developer Program for Developer ID signing and notarization. Public users do not need Xcode, an Apple ID, or a developer account.
-
-Phase 1 discovery is complete in `DevSessionsCore`:
-
-- Five adapters: OpenCode, Claude Code, Codex, Pi, and Oh My Pi.
-- Fixture checks cover title selection, old sessions, archived/child sessions, sidechains, nested subagent transcripts, and all five agents.
-- The real scan reports OpenCode 200 (cache cap), Claude 18, and Codex 24 on this machine. The cache is the global top 200 by recency, so a heavily used OpenCode fills it.
-- Pi is installed but has no saved sessions yet. Oh My Pi is installed, but its `~/.omp` session directory has not been created by a first session yet.
-- The widget list is a flat global recency order. There are no per-agent sections, quotas, or fairness rules; a heavily used agent naturally fills the top rows.
 
 ## Requirements
 
@@ -65,20 +60,20 @@ The project is preconfigured for team `67Z29VG25Z`. To use a different team, upd
 
 Then run `make project` again. The XcodeGen post-generation hook keeps the App Groups capability metadata valid.
 
-## Phase 0 acceptance test
+## Current acceptance test
 
-1. Launch the app. The menu bar shows a terminal icon.
-2. Open **Show Phase 0 Window** from the menu bar.
-3. The window should show three demo sessions and “Shared state” should not show an error.
-4. Click **Refresh Widget**. The relative timestamps should reset.
-5. Add the widget from Notification Center or the desktop:
+1. Launch `/Applications/DevSessions.app`. The menu bar shows a terminal icon.
+2. Choose **Open Sessions** from the menu bar.
+3. The window should show real recent sessions, ordered globally by last activity.
+4. Change **Settings → Sessions → Show sessions from**. The widget should update to the selected window.
+5. Add or refresh the widget from the desktop:
    - Right-click the desktop → **Edit Widgets** → **DevSessions**.
-6. The widget should show the demo sessions. Small shows one; medium shows two; large shows up to six.
-7. Click a demo row in the widget.
-8. DevSessions should launch/handle the deep link and open Terminal in the Phase 0 project directory. The Terminal window prints the agent, project, session, and working directory, then waits for a key press.
-9. Open **Settings** and toggle **Launch at Login**. macOS may ask for approval in System Settings → General → Login Items.
+   - If upgrading from the Phase 0 demo, remove and re-add the widget once.
+6. The widget should show the same global recent sessions. Small shows one; medium shows two; large shows up to six.
+7. Click a session row. DevSessions should launch Terminal in the original project directory and run the correct CLI resume command.
+8. Open **Settings** and check the per-agent diagnostics and launch-at-login status.
 
-If step 3 shows an App Group error, signing/App Group setup is not complete. If step 8 opens no Terminal, check Console for `Terminal.app could not be found` or `Terminal could not launch the hand-off script`.
+If the app shows an App Group error, signing/App Group setup is not complete. If a resume fails, check the session’s project directory and the resolved CLI path; diagnostics are in the app, not the widget.
 
 ## Checks
 
@@ -116,25 +111,29 @@ project.yml               XcodeGen project definition
 prd.txt                   Product requirements
 ```
 
-## Phase 0 behavior notes
+## Current behavior
 
-- The demo sessions all point at `~/Library/Application Support/DevSessions/Phase0Project`, which the host app creates.
-- The demo Terminal script only prints diagnostics. It does not call the real agents yet.
+- The host app scans all five agents at launch, every five minutes, on wake, and on manual refresh.
+- Only the global top 200 sessions by last activity are cached, with no per-agent quota. A heavily used agent naturally fills the top rows.
 - The widget reads a single `state.json` from the App Group. The host app writes it atomically with owner-only permissions.
+- Resume validates the session against the cache, checks the project directory, resolves the CLI to an absolute path, writes a `.command` file, and opens it in Terminal.
+- The app rescans shortly after a resume.
 - The App Group uses the team-prefixed macOS convention `67Z29VG25Z.com.devsessions.shared`; this is what allows local widget sharing with a free Apple Development team.
-- A Debug-only `phase0-status.txt` is written to `~/Library/Application Support/DevSessions` for troubleshooting.
+- A Debug-only `scan-status.txt` is written to `~/Library/Application Support/DevSessions` for troubleshooting.
 - The host app is intentionally not sandboxed; the widget extension is sandboxed.
 - No network access, analytics, or third-party dependencies are used.
-- Real adapters, the 1/3/7/14/30-day setting, and real resume commands land in later phases.
 
 ## Next phase
 
-Phase 2 wires the discovery core into the host app:
+Phase 3 is widget polish:
 
-- Replace the Phase 0 demo writer with `SessionScanner`.
-- Persist the real five-agent scan to the App Group cache.
-- Show real sessions in the widget.
-- Resolve absolute CLI paths for OpenCode, Claude, Codex, Pi, and Oh My Pi.
-- Replace the demo Terminal script with real resume commands and post-resume rescanning.
+- Tune row counts and spacing against the shipping widget sizes.
+- Add the remaining empty/partial-data states and accessibility details.
+- Verify all five agent labels and long-title truncation in light and dark appearance.
 
-Pi and Oh My Pi need one real session each for final end-to-end validation. The adapters are already fixture-tested.
+Phase 4 is public distribution:
+
+- Release build with Developer ID signing and notarization.
+- DMG, clean-install test, README/privacy note, and final acceptance checklist.
+
+Pi and Oh My Pi still need one real session each for live end-to-end validation. Their adapters are fixture-tested and installed.

@@ -1,3 +1,4 @@
+import DevSessionsCore
 import ServiceManagement
 import SwiftUI
 
@@ -48,25 +49,84 @@ final class LoginItemModel: ObservableObject {
 }
 
 struct SettingsView: View {
-    @ObservedObject private var model = LoginItemModel()
+    @ObservedObject private var app = Phase0Controller.shared
+    @ObservedObject private var loginItem = LoginItemModel()
+
+    private var launchAtLoginBinding: Binding<Bool> {
+        Binding(
+            get: { loginItem.launchAtLogin },
+            set: { loginItem.setLaunchAtLogin($0) }
+        )
+    }
+
+    private var windowBinding: Binding<Int> {
+        Binding(
+            get: { app.activityWindowDays },
+            set: { app.setActivityWindow($0) }
+        )
+    }
 
     var body: some View {
         Form {
-            Section("General") {
-                Text("DevSessions is a local-only utility. It reads agent metadata on this Mac and never sends session data anywhere.")
-                    .font(.callout)
+            Section("Sessions") {
+                Picker("Show sessions from", selection: windowBinding) {
+                    ForEach([1, 3, 7, 14, 30], id: \.self) { days in
+                        Text(days == 1 ? "Last 24 hours" : "Last \(days) days")
+                            .tag(days)
+                    }
+                }
+                Text("The widget is a flat list ordered globally by last activity. There are no per-agent sections or quotas.")
+                    .font(.caption)
                     .foregroundStyle(.secondary)
             }
 
+            Section("Agents") {
+                if let diagnostics = app.state?.diagnostics {
+                    ForEach(diagnostics, id: \.agent) { diagnostic in
+                        HStack {
+                            Text(diagnostic.agent.displayName)
+                            Spacer()
+                            Text(statusLabel(diagnostic.status))
+                                .foregroundStyle(
+                                    diagnostic.status == .ok ? Color.secondary : Color.orange
+                                )
+                            Text("\(diagnostic.sessionCount)")
+                                .monospacedDigit()
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                } else {
+                    Text("No scan yet.")
+                        .foregroundStyle(.secondary)
+                }
+
+                HStack {
+                    Button("Refresh Now") {
+                        app.refresh()
+                    }
+                    if app.isScanning {
+                        ProgressView()
+                            .controlSize(.small)
+                    }
+                }
+
+                if let generatedAt = app.state?.generatedAt {
+                    Text("Last scan \(generatedAt, style: .relative)")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+
+                if let error = app.errorMessage {
+                    Text(error)
+                        .font(.caption)
+                        .foregroundStyle(.red)
+                        .textSelection(.enabled)
+                }
+            }
+
             Section("Launch at Login") {
-                Toggle(
-                    "Launch DevSessions at login",
-                    isOn: Binding(
-                        get: { model.launchAtLogin },
-                        set: { model.setLaunchAtLogin($0) }
-                    )
-                )
-                if let message = model.message {
+                Toggle("Launch DevSessions at login", isOn: launchAtLoginBinding)
+                if let message = loginItem.message {
                     Text(message)
                         .font(.caption)
                         .foregroundStyle(.secondary)
@@ -76,17 +136,26 @@ struct SettingsView: View {
                 }
             }
 
-            Section("Phase 0") {
-                Text("This build writes three demo sessions to the shared App Group cache. Real discovery and resume are implemented in later phases.")
+            Section("About") {
+                Text("DevSessions reads local session metadata from OpenCode, Claude Code, Codex, Pi, and Oh My Pi. No session data leaves this Mac.")
                     .font(.callout)
                     .foregroundStyle(.secondary)
             }
         }
         .formStyle(.grouped)
         .padding(20)
-        .frame(width: 480)
+        .frame(width: 540)
         .onAppear {
-            model.refresh()
+            loginItem.refresh()
+        }
+    }
+
+    private func statusLabel(_ status: DiagnosticStatus) -> String {
+        switch status {
+        case .ok: return "OK"
+        case .unsupported: return "Unsupported"
+        case .notInstalled: return "No data"
+        case .error: return "Error"
         }
     }
 }

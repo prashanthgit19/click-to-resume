@@ -1,5 +1,4 @@
 import AppKit
-import DevSessionsCore
 import SwiftUI
 
 @main
@@ -12,10 +11,10 @@ struct DevSessionsApp: App {
         }
         .menuBarExtraStyle(.menu)
 
-        Window("DevSessions — Phase 0", id: "phase0") {
+        Window("DevSessions", id: "sessions") {
             Phase0View()
         }
-        .defaultSize(width: 580, height: 480)
+        .defaultSize(width: 740, height: 660)
 
         Settings {
             SettingsView()

@@ -1,6 +1,7 @@
 import AppKit
 import Combine
 import DevSessionsCore
+import ServiceManagement
 import WidgetKit
 
 @MainActor
@@ -8,12 +9,15 @@ final class Phase0Controller: ObservableObject {
     static let shared = Phase0Controller()
 
     @Published private(set) var state: SharedState?
-    @Published private(set) var statusMessage = "Not started"
+    @Published private(set) var activityWindowDays = 7
+    @Published private(set) var isScanning = false
+    @Published private(set) var statusMessage = "Ready to scan."
     @Published private(set) var errorMessage: String?
 
     private var store: SharedStore?
-    private var projectDirectory: URL?
     private var didBootstrap = false
+    private var scanTimer: Timer?
+    private var wakeObserver: NSObjectProtocol?
 
     private init() {}
 
@@ -27,115 +31,187 @@ final class Phase0Controller: ObservableObject {
                 throw Phase0Error.appGroupUnavailable
             }
             self.store = store
-            writeDebugStatus("STORE \(store.fileURL.path)")
 
-            let project = try makeProjectDirectory()
-            self.projectDirectory = project
+            if let cached = try? store.load() {
+                activityWindowDays = allowedWindow(cached.activityWindowDays)
+                if !cached.sessions.contains(where: {
+                    $0.projectPath.contains("DevSessions/Phase0Project")
+                }) {
+                    state = cached
+                }
+            }
 
-            let demo = DemoData.make(projectPath: project.path)
-            try store.save(demo)
-            state = demo
-            statusMessage = "Shared state written. Add the widget from Notification Center."
-            errorMessage = nil
-            writeDebugStatus("OK sessions=\(demo.sessions.count) path=\(store.fileURL.path)")
-            reloadWidget()
+            startScheduler()
+            requestLoginItemOnce()
+            refresh()
         } catch {
-            errorMessage = error.localizedDescription
-            statusMessage = "Phase 0 setup failed."
-            writeDebugStatus("ERROR \(error.localizedDescription)")
+            presentError(error.localizedDescription)
+            statusMessage = "Setup failed."
         }
     }
 
     func refresh() {
-        guard let store, let projectDirectory else {
-            bootstrap()
+        guard !isScanning else { return }
+        guard store != nil else {
+            presentError(Phase0Error.appGroupUnavailable.localizedDescription)
             return
         }
 
-        do {
-            let demo = DemoData.make(projectPath: projectDirectory.path)
-            try store.save(demo)
-            state = demo
-            statusMessage = "Refreshed at \(Self.timeFormatter.string(from: demo.generatedAt))"
-            errorMessage = nil
-            writeDebugStatus("REFRESH OK sessions=\(demo.sessions.count)")
-            reloadWidget()
-        } catch {
-            errorMessage = error.localizedDescription
-            writeDebugStatus("REFRESH ERROR \(error.localizedDescription)")
+        isScanning = true
+        statusMessage = "Scanning all agents…"
+
+        Task { [weak self] in
+            guard let self else { return }
+            let result = await Task.detached(priority: .utility) {
+                SessionScanner(windowDays: 30).scan(now: Date())
+            }.value
+            self.apply(result)
         }
     }
 
-    func testResume() {
-        guard let session = state?.sessions.first else {
-            errorMessage = "No demo session is available."
+    func setActivityWindow(_ days: Int) {
+        let allowed = allowedWindow(days)
+        guard allowed == days else { return }
+
+        activityWindowDays = days
+
+        if var current = state {
+            current.activityWindowDays = days
+            state = current
+            do {
+                try store?.save(current)
+            } catch {
+                errorMessage = error.localizedDescription
+            }
+        }
+
+        WidgetCenter.shared.reloadAllTimelines()
+    }
+
+    func resume(_ session: AgentSession, hideAfterLaunch: Bool) {
+        guard FileManager.default.fileExists(atPath: session.projectPath) else {
+            presentError("The project folder no longer exists:\n\(session.projectPath)")
             return
         }
-        resume(session, hideAfterLaunch: false)
+
+        guard let executable = AgentExecutableResolver.resolve(session.agent) else {
+            presentError(
+                "Could not find the \(session.agent.displayName) CLI. Install it or add it to your login shell PATH."
+            )
+            return
+        }
+
+        let script = CommandScriptBuilder.resumeScript(
+            for: session,
+            executablePath: executable.path
+        )
+
+        Task {
+            do {
+                try await TerminalLauncher.open(script: script)
+                statusMessage = "Opened \(session.projectName) in Terminal."
+                errorMessage = nil
+                writeDebugStatus("RESUME \(session.agent.rawValue) \(session.id)")
+                if hideAfterLaunch {
+                    NSApp.hide(nil)
+                }
+                scheduleRescanAfterResume()
+            } catch {
+                presentError(error.localizedDescription)
+            }
+        }
     }
 
     func handle(_ url: URL) {
         guard let link = DeepLink.parse(url) else {
-            errorMessage = "Ignored invalid deep link: \(url.absoluteString)"
+            presentError("Invalid DevSessions link.")
             return
         }
 
         switch link {
         case .settings:
             openSettings()
+
         case let .resume(agent, sessionID):
             guard let session = state?.sessions.first(where: {
                 $0.agent == agent && $0.id == sessionID
             }) else {
-                errorMessage = "Session not found in the Phase 0 cache."
+                presentError(
+                    "That session is no longer in the current cache. Refresh and try again."
+                )
                 return
             }
             resume(session, hideAfterLaunch: true)
         }
     }
 
-    func resume(_ session: AgentSession, hideAfterLaunch: Bool) {
-        guard FileManager.default.fileExists(atPath: session.projectPath) else {
-            errorMessage = "Project directory no longer exists: \(session.projectPath)"
-            return
+    // MARK: - Private
+
+    private func apply(_ result: SessionScanResult) {
+        let newState = SharedState(
+            generatedAt: result.generatedAt,
+            activityWindowDays: activityWindowDays,
+            sessions: result.sessions,
+            diagnostics: result.diagnostics
+        )
+
+        let changed = state?.sessions != newState.sessions
+            || state?.diagnostics != newState.diagnostics
+            || state?.activityWindowDays != newState.activityWindowDays
+
+        do {
+            try store?.save(newState)
+            errorMessage = nil
+        } catch {
+            errorMessage = error.localizedDescription
+            writeDebugStatus("SAVE ERROR \(error.localizedDescription)")
         }
 
-        let script = CommandScriptBuilder.demoScript(for: session)
-        Task {
-            do {
-                try await TerminalLauncher.open(script: script)
-                statusMessage = "Terminal launched for \(session.projectName)."
-                errorMessage = nil
-                writeDebugStatus("RESUME LAUNCHED \(session.agent.rawValue) \(session.id)")
-                if hideAfterLaunch {
-                    NSApp.hide(nil)
-                }
-            } catch {
-                errorMessage = error.localizedDescription
-                writeDebugStatus("RESUME ERROR \(error.localizedDescription)")
+        state = newState
+        isScanning = false
+        statusMessage = "\(newState.sessions.count) sessions · \(Self.timeFormatter.string(from: result.generatedAt))"
+        writeDebugStatus("SCAN \(newState.sessions.count) sessions")
+
+        if changed {
+            WidgetCenter.shared.reloadAllTimelines()
+        }
+    }
+
+    private func startScheduler() {
+        guard scanTimer == nil else { return }
+
+        scanTimer = Timer.scheduledTimer(withTimeInterval: 300, repeats: true) { [weak self] _ in
+            Task { @MainActor in
+                self?.refresh()
+            }
+        }
+
+        wakeObserver = NSWorkspace.shared.notificationCenter.addObserver(
+            forName: NSWorkspace.didWakeNotification,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            Task { @MainActor in
+                self?.refresh()
             }
         }
     }
 
-    private func reloadWidget() {
-        WidgetCenter.shared.reloadAllTimelines()
+    private func scheduleRescanAfterResume() {
+        Task { [weak self] in
+            try? await Task.sleep(nanoseconds: 15_000_000_000)
+            self?.refresh()
+        }
     }
 
-    private func makeProjectDirectory() throws -> URL {
-        let support = try FileManager.default.url(
-            for: .applicationSupportDirectory,
-            in: .userDomainMask,
-            appropriateFor: nil,
-            create: true
-        )
-        let directory = support
-            .appendingPathComponent("DevSessions", isDirectory: true)
-            .appendingPathComponent("Phase0Project", isDirectory: true)
-        try FileManager.default.createDirectory(
-            at: directory,
-            withIntermediateDirectories: true
-        )
-        return directory
+    private func requestLoginItemOnce() {
+        let key = "DevSessions.didRequestLoginItem"
+        guard !UserDefaults.standard.bool(forKey: key) else { return }
+        UserDefaults.standard.set(true, forKey: key)
+
+        if SMAppService.mainApp.status == .notRegistered {
+            try? SMAppService.mainApp.register()
+        }
     }
 
     private func openSettings() {
@@ -145,6 +221,23 @@ final class Phase0Controller: ObservableObject {
             NSApp.sendAction(showPreferences, to: nil, from: nil)
         }
         NSApp.activate(ignoringOtherApps: true)
+    }
+
+    private func presentError(_ message: String) {
+        errorMessage = message
+        statusMessage = "Needs attention"
+        writeDebugStatus("ERROR \(message)")
+
+        NSApp.activate(ignoringOtherApps: true)
+        let alert = NSAlert()
+        alert.messageText = "DevSessions"
+        alert.informativeText = message
+        alert.alertStyle = .warning
+        alert.runModal()
+    }
+
+    private func allowedWindow(_ days: Int) -> Int {
+        [1, 3, 7, 14, 30].contains(days) ? days : 7
     }
 
     private static let timeFormatter: DateFormatter = {
@@ -170,11 +263,18 @@ final class Phase0Controller: ObservableObject {
             withIntermediateDirectories: true
         )
         try? message.write(
-            to: directory.appendingPathComponent("phase0-status.txt"),
+            to: directory.appendingPathComponent("scan-status.txt"),
             atomically: true,
             encoding: .utf8
         )
         #endif
+    }
+
+    deinit {
+        scanTimer?.invalidate()
+        if let wakeObserver {
+            NSWorkspace.shared.notificationCenter.removeObserver(wakeObserver)
+        }
     }
 }
 
