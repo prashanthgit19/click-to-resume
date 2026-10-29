@@ -3,7 +3,7 @@ import Foundation
 public enum AppGroup {
     /// Must match Config/DevSessions.entitlements and Config/DevSessionsWidget.entitlements.
     /// Change this if your team requires a team-scoped App Group identifier.
-    public static let identifier = "67Z29VG25Z.com.devsessions.shared"
+    public static let identifier = "67Z29VG25Z.com.devsessions.shared2"
 }
 
 public struct SharedStore: Sendable {

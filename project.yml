@@ -64,7 +64,7 @@ targets:
     settings:
       base:
         PRODUCT_NAME: DevSessionsWidget
-        PRODUCT_BUNDLE_IDENTIFIER: com.devsessions.app.widget
+        PRODUCT_BUNDLE_IDENTIFIER: com.devsessions.app.widget2
         INFOPLIST_FILE: Config/DevSessionsWidget-Info.plist
         CODE_SIGN_ENTITLEMENTS: Config/DevSessionsWidget.entitlements
         ENABLE_APP_SANDBOX: YES

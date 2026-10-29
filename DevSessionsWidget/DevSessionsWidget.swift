@@ -45,7 +45,7 @@ struct DevSessionsProvider: TimelineProvider {
 }
 
 struct DevSessionsWidget: Widget {
-    private let kind = "DevSessionsWidget"
+    private let kind = "DevSessionsWidgetV5"
 
     var body: some WidgetConfiguration {
         StaticConfiguration(kind: kind, provider: DevSessionsProvider()) { entry in

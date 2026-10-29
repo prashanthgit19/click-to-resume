@@ -358,7 +358,7 @@
 				ENABLE_APP_SANDBOX = YES;
 				INFOPLIST_FILE = "Config/DevSessionsWidget-Info.plist";
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @executable_path/../../../../Frameworks";
-				PRODUCT_BUNDLE_IDENTIFIER = com.devsessions.app.widget;
+				PRODUCT_BUNDLE_IDENTIFIER = com.devsessions.app.widget2;
 				PRODUCT_NAME = DevSessionsWidget;
 				SDKROOT = macosx;
 				SKIP_INSTALL = YES;
@@ -390,7 +390,7 @@
 				ENABLE_APP_SANDBOX = YES;
 				INFOPLIST_FILE = "Config/DevSessionsWidget-Info.plist";
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @executable_path/../../../../Frameworks";
-				PRODUCT_BUNDLE_IDENTIFIER = com.devsessions.app.widget;
+				PRODUCT_BUNDLE_IDENTIFIER = com.devsessions.app.widget2;
 				PRODUCT_NAME = DevSessionsWidget;
 				SDKROOT = macosx;
 				SKIP_INSTALL = YES;

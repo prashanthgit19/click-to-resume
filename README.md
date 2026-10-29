@@ -20,7 +20,7 @@ See `prd.txt` for the full product requirements.
 Phases 0–2 are runtime-validated on this Mac:
 
 - Signed app installed at `/Applications/DevSessions.app`.
-- App Group cache written successfully at `~/Library/Group Containers/67Z29VG25Z.com.devsessions.shared/DevSessions/state.json`.
+- App Group cache written successfully at `~/Library/Group Containers/67Z29VG25Z.com.devsessions.shared2/DevSessions/state.json`.
 - The host app scans real data and reports **200 cached sessions** on this machine.
 - The widget was re-registered from the Phase 2.1 app.
 - The widget list is a flat global recency order: no per-agent sections, quotas, or fairness rules.
@@ -51,7 +51,7 @@ In Xcode:
 
 1. Select the `DevSessions` target → Signing & Capabilities → choose your team.
 2. Select the `DevSessionsWidget` target → choose the same team.
-3. Make sure both targets use the same App Group. The checked-in default is `67Z29VG25Z.com.devsessions.shared`, using macOS’s `<TeamID>.<group-name>` convention.
+3. Make sure both targets use the same App Group. The checked-in default is `67Z29VG25Z.com.devsessions.shared2`, using macOS’s `<TeamID>.<group-name>` convention.
 4. Build and run the `DevSessions` scheme.
 
 The project is preconfigured for team `67Z29VG25Z`. To use a different team, update:
@@ -124,7 +124,7 @@ prd.txt                   Product requirements
 - **Terminal.app** is the default. **Ghostty** is available when installed and opens a new Ghostty instance per resume.
 - The terminal choice is global for all sessions, stored app-side; the widget always deep-links back to DevSessions first.
 - The app rescans shortly after a resume.
-- The App Group uses the team-prefixed macOS convention `67Z29VG25Z.com.devsessions.shared`; this is what allows local widget sharing with a free Apple Development team.
+- The App Group uses the team-prefixed macOS convention `67Z29VG25Z.com.devsessions.shared2`; this is what allows local widget sharing with a free Apple Development team.
 - A Debug-only `scan-status.txt` is written to `~/Library/Application Support/DevSessions` for troubleshooting.
 - The host app is intentionally not sandboxed; the widget extension is sandboxed.
 - No network access, analytics, or third-party dependencies are used.
