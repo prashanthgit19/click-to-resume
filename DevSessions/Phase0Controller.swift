@@ -1,7 +1,6 @@
 import AppKit
 import Combine
 import DevSessionsCore
-import ServiceManagement
 import WidgetKit
 
 @MainActor
@@ -42,7 +41,6 @@ final class Phase0Controller: ObservableObject {
             }
 
             startScheduler()
-            requestLoginItemOnce()
             refresh()
         } catch {
             presentError(error.localizedDescription)
@@ -224,16 +222,6 @@ final class Phase0Controller: ObservableObject {
         Task { [weak self] in
             try? await Task.sleep(nanoseconds: 15_000_000_000)
             self?.refresh()
-        }
-    }
-
-    private func requestLoginItemOnce() {
-        let key = "DevSessions.didRequestLoginItem"
-        guard !UserDefaults.standard.bool(forKey: key) else { return }
-        UserDefaults.standard.set(true, forKey: key)
-
-        if SMAppService.mainApp.status == .notRegistered {
-            try? SMAppService.mainApp.register()
         }
     }
 

@@ -331,59 +331,25 @@ public struct SessionScanner: Sendable {
         var lastError: Error?
         for stateFile in stateFiles {
             do {
-                let database = try SQLiteDatabase(path: stateFile.path, readOnly: false)
-                guard try database.tableExists("threads") else { continue }
-
-                var sessions: [AgentSession] = []
-                let cutoffMilliseconds = Int64(cutoff.timeIntervalSince1970 * 1_000)
-                let timestampSQL = "COALESCE(NULLIF(updated_at_ms, 0), updated_at * 1000)"
-                let sql = """
-                    SELECT id, cwd, title, name, \(timestampSQL)
-                    FROM threads
-                    WHERE archived = 0
-                      AND \(timestampSQL) >= ?
-                    ORDER BY \(timestampSQL) DESC
-                    LIMIT 200
-                    """
-
-                try database.query(
-                    sql,
-                    bind: { statement in
-                        sqlite3_bind_int64(statement, 1, cutoffMilliseconds)
-                    },
-                    row: { statement in
-                        guard let id = database.text(statement, 0),
-                              SessionIDValidator.isValid(id, for: .codex),
-                              let cwd = database.text(statement, 1),
-                              !cwd.isEmpty else {
-                            return
-                        }
-
-                        let milliseconds = database.int64(statement, 4)
-                        guard milliseconds > 0 else { return }
-
-                        let title = normalizedTitle(database.text(statement, 3))
-                            ?? normalizedTitle(database.text(statement, 2))
-                            ?? "Untitled session"
-
-                        sessions.append(
-                            AgentSession(
-                                id: id,
-                                agent: .codex,
-                                projectName: projectName(for: cwd),
-                                projectPath: cwd,
-                                title: title,
-                                lastActive: Date(
-                                    timeIntervalSince1970: Double(milliseconds) / 1_000
-                                )
-                            )
-                        )
-                    }
-                )
-
-                return .ok(sessions)
+                if let output = try codexOutput(
+                    from: stateFile,
+                    cutoff: cutoff,
+                    readOnly: true
+                ) {
+                    return output
+                }
             } catch {
-                lastError = error
+                do {
+                    if let output = try codexOutput(
+                        from: stateFile,
+                        cutoff: cutoff,
+                        readOnly: false
+                    ) {
+                        return output
+                    }
+                } catch {
+                    lastError = error
+                }
             }
         }
 
@@ -391,6 +357,66 @@ public struct SessionScanner: Sendable {
             return .error(lastError.localizedDescription)
         }
         return .unsupported("Codex threads table not found.")
+    }
+
+    /// Reads a Codex state database read-only. Falls back to a writable,
+    /// query-only connection for WAL databases that cannot open read-only.
+    private func codexOutput(
+        from stateFile: URL,
+        cutoff: Date,
+        readOnly: Bool
+    ) throws -> AdapterOutput? {
+        let database = try SQLiteDatabase(path: stateFile.path, readOnly: readOnly)
+        guard try database.tableExists("threads") else { return nil }
+
+        var sessions: [AgentSession] = []
+        let cutoffMilliseconds = Int64(cutoff.timeIntervalSince1970 * 1_000)
+        let timestampSQL = "COALESCE(NULLIF(updated_at_ms, 0), updated_at * 1000)"
+        let sql = """
+            SELECT id, cwd, title, name, \(timestampSQL)
+            FROM threads
+            WHERE archived = 0
+              AND \(timestampSQL) >= ?
+            ORDER BY \(timestampSQL) DESC
+            LIMIT 200
+            """
+
+        try database.query(
+            sql,
+            bind: { statement in
+                sqlite3_bind_int64(statement, 1, cutoffMilliseconds)
+            },
+            row: { statement in
+                guard let id = database.text(statement, 0),
+                      SessionIDValidator.isValid(id, for: .codex),
+                      let cwd = database.text(statement, 1),
+                      !cwd.isEmpty else {
+                    return
+                }
+
+                let milliseconds = database.int64(statement, 4)
+                guard milliseconds > 0 else { return }
+
+                let title = normalizedTitle(database.text(statement, 3))
+                    ?? normalizedTitle(database.text(statement, 2))
+                    ?? "Untitled session"
+
+                sessions.append(
+                    AgentSession(
+                        id: id,
+                        agent: .codex,
+                        projectName: projectName(for: cwd),
+                        projectPath: cwd,
+                        title: title,
+                        lastActive: Date(
+                            timeIntervalSince1970: Double(milliseconds) / 1_000
+                        )
+                    )
+                )
+            }
+        )
+
+        return .ok(sessions)
     }
 
     private func stateVersion(of url: URL) -> Int {

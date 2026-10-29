@@ -3,7 +3,11 @@
 DevSessions is a local-only macOS utility.
 
 - It reads session metadata from OpenCode, Claude Code, Codex, Pi, and Oh My Pi on this Mac.
+- Codex session data is only read; DevSessions does not change its contents.
 - It writes session metadata to the DevSessions App Group cache so the widget can display it.
+- Terminal choice and activity-window settings are stored in UserDefaults on this Mac.
+- Launch at login is off by default and is only enabled from Settings.
+- Resume commands are written to `~/Library/Caches/DevSessions/launch` with owner-only permissions and cleaned up on later resumes after 24 hours.
 - It does not send session data, usage data, or telemetry to any server.
 - It does not use an account, cloud service, or AI model.
 - Session titles may contain sensitive prompt text. They are stored locally in the App Group container with owner-only permissions and are not logged by DevSessions.

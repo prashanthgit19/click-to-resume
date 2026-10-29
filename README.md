@@ -15,7 +15,6 @@ Public builds are ad-hoc signed, not notarized. macOS blocks the first launch un
 1. Open the DMG and drag `DevSessions.app` to `Applications`.
 2. Try to open DevSessions once. macOS reports that it cannot verify the app.
 3. Open **System Settings → Privacy & Security**, scroll to **Security**, click **Open Anyway**, authenticate, then click **Open**.
-4. Approve any Terminal or Ghostty automation prompts when resuming a session.
 
 If macOS says the app is damaged, remove the quarantine flag and open it again:
 
@@ -148,6 +147,7 @@ scripts/                  Project generation fixes, icon generator, release pack
 .github/workflows/        Tag-triggered DMG release build
 project.yml               XcodeGen project definition
 prd.txt                   Product requirements
+LICENSE                   MIT license
 ```
 
 ## Current behavior
@@ -192,7 +192,7 @@ APPLE_APP_PASSWORD="..." \
 make release
 ```
 
-The packaging script submits the DMG to `notarytool` and staples it when a Developer ID and all three Apple credentials are present. Every build writes `dist/SHA256SUMS`.
+The packaging script submits the DMG to `notarytool` and staples it when a Developer ID and all three Apple credentials are present. Every build writes `dist/SHA256SUMS` and verifies the signature, both architectures, and the DMG checksum.
 
 ### Publishing
 
@@ -212,3 +212,7 @@ The workflow needs no secrets. Add Developer ID and notarization secrets later i
 - Pi and Oh My Pi still need one real session each for live end-to-end validation. Their adapters are fixture-tested and installed. Ghostty's no-Automation launch path is verified; AppleScript window reuse remains future work.
 
 The Phase 3 widget redesign is parked locally on the `phase3-attempt` branch. The shipping widget is the working Phase 2.1 layout; the Phase 3 work should be reintroduced incrementally later.
+
+## License
+
+MIT. See `LICENSE`.

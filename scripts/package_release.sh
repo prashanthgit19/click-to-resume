@@ -12,6 +12,7 @@ DMG="$DIST/DevSessions-$VERSION.dmg"
 
 rm -rf "$DIST"
 mkdir -p "$DIST"
+chmod 755 "$STAGING"
 
 SIGN_ARGS=()
 if [[ "${DEVELOPER_ID_APPLICATION:-}" == "-" ]]; then
@@ -36,6 +37,21 @@ xcodebuild \
   "${SIGN_ARGS[@]}" \
   build
 
+codesign --verify --deep --strict "$APP"
+
+ARCHS="$(lipo -archs "$APP/Contents/MacOS/DevSessions")"
+for arch in arm64 x86_64; do
+  if [[ " $ARCHS " != *" $arch "* ]]; then
+    echo "Missing $arch slice in $APP" >&2
+    exit 1
+  fi
+done
+
+if [[ ! -d "$APP/Contents/PlugIns/DevSessionsWidget.appex" ]]; then
+  echo "Widget extension missing from $APP" >&2
+  exit 1
+fi
+
 ditto --norsrc --noextattr --noacl "$APP" "$STAGING/DevSessions.app"
 ln -s /Applications "$STAGING/Applications"
 cp -X "$ROOT/PRIVACY.md" "$STAGING/PRIVACY.md"
@@ -46,6 +62,8 @@ hdiutil create \
   -ov \
   -format UDZO \
   "$DMG"
+
+hdiutil verify "$DMG" >/dev/null
 
 if [[ -n "${DEVELOPER_ID_APPLICATION:-}" && "${DEVELOPER_ID_APPLICATION}" != "-" && -n "${APPLE_ID:-}" && -n "${APPLE_TEAM_ID:-}" && -n "${APPLE_APP_PASSWORD:-}" ]]; then
   xcrun notarytool submit "$DMG" \
@@ -59,6 +77,7 @@ fi
 (
   cd "$DIST"
   shasum -a 256 "$(basename "$DMG")" > SHA256SUMS
+  shasum -a 256 -c SHA256SUMS
 )
 
 echo "Built $DMG"
