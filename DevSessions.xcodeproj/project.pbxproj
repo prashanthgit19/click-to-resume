@@ -1,0 +1,561 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		120733B4963C8C0C9003CA08 /* DevSessionsWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA83EED087223F52349CC956 /* DevSessionsWidget.swift */; };
+		18098F8A0D25F37EB14DDA93 /* MenuBarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E4E874BAF26CCA71153D331 /* MenuBarView.swift */; };
+		1BD971619951ACB5B2C235D2 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23E8F1B2024C68145A24FFC8 /* AppDelegate.swift */; };
+		25A20F8EFCB7E99B38535B8A /* DevSessionsWidgetView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E42F55A3388C0096186A23BF /* DevSessionsWidgetView.swift */; };
+		2E68EBB0668CF2822ACDE70D /* DevSessionsWidget.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 64D11289525CE80847B26A7C /* DevSessionsWidget.appex */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		32289E53C01DF8BEC4C641B1 /* Phase0Controller.swift in Sources */ = {isa = PBXBuildFile; fileRef = 312389CC8655D0FA0E050C99 /* Phase0Controller.swift */; };
+		48BBD51AFFBA4EC75BAE013C /* DevSessionsWidgetBundle.swift in Sources */ = {isa = PBXBuildFile; fileRef = C19A12CCDFFC4DC30EB4991E /* DevSessionsWidgetBundle.swift */; };
+		71B74DF3DE9AC08E73065298 /* DevSessionsCore in Frameworks */ = {isa = PBXBuildFile; productRef = E63C9ED941BDE8D4BDEE23B6 /* DevSessionsCore */; };
+		7CE429C1E1953FC0CAB2D396 /* TerminalLauncher.swift in Sources */ = {isa = PBXBuildFile; fileRef = 397EAC1ACACC75B07364657E /* TerminalLauncher.swift */; };
+		84E5F534FD96010E40731888 /* DevSessionsCore in Frameworks */ = {isa = PBXBuildFile; productRef = 8FEDF3DE58F0D7A367BFA807 /* DevSessionsCore */; };
+		966B95759F8BA23703B41FCB /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 344A400BA60D14AF6C862F55 /* SettingsView.swift */; };
+		A9E815B070C8A9ACA811F155 /* DevSessionsApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 958833A2FAF5C3AE8BC77217 /* DevSessionsApp.swift */; };
+		D41E131CE98CDB7659AA4DBE /* Phase0View.swift in Sources */ = {isa = PBXBuildFile; fileRef = C921711CBE281BC785894089 /* Phase0View.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		4DDD06533324A81A9AB2D542 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 452E170CDAD9DF53BD5448BF /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 9A47A3BE4B8AE5D16C226631;
+			remoteInfo = DevSessionsWidget;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		5F90BF1930F93FB733F6B617 /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				2E68EBB0668CF2822ACDE70D /* DevSessionsWidget.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
+/* Begin PBXFileReference section */
+		0E4E874BAF26CCA71153D331 /* MenuBarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarView.swift; sourceTree = "<group>"; };
+		23E8F1B2024C68145A24FFC8 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
+		2F6C0EC788DFBC6149A0E812 /* DevSessions.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = DevSessions.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		312389CC8655D0FA0E050C99 /* Phase0Controller.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Phase0Controller.swift; sourceTree = "<group>"; };
+		344A400BA60D14AF6C862F55 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		397EAC1ACACC75B07364657E /* TerminalLauncher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TerminalLauncher.swift; sourceTree = "<group>"; };
+		64D11289525CE80847B26A7C /* DevSessionsWidget.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = DevSessionsWidget.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		958833A2FAF5C3AE8BC77217 /* DevSessionsApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DevSessionsApp.swift; sourceTree = "<group>"; };
+		AA83EED087223F52349CC956 /* DevSessionsWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DevSessionsWidget.swift; sourceTree = "<group>"; };
+		B00FC8BAAD089878D01CCAF6 /* DevSessionsCore */ = {isa = PBXFileReference; lastKnownFileType = folder; name = DevSessionsCore; path = Packages/DevSessionsCore; sourceTree = SOURCE_ROOT; };
+		C19A12CCDFFC4DC30EB4991E /* DevSessionsWidgetBundle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DevSessionsWidgetBundle.swift; sourceTree = "<group>"; };
+		C921711CBE281BC785894089 /* Phase0View.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Phase0View.swift; sourceTree = "<group>"; };
+		E42F55A3388C0096186A23BF /* DevSessionsWidgetView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DevSessionsWidgetView.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		18A8C23783CBC51E91A9AE7F /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				71B74DF3DE9AC08E73065298 /* DevSessionsCore in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		2348A25EEA2A0FB646043395 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				84E5F534FD96010E40731888 /* DevSessionsCore in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		100ABB7A032FBB8A7FA8BB15 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				2F6C0EC788DFBC6149A0E812 /* DevSessions.app */,
+				64D11289525CE80847B26A7C /* DevSessionsWidget.appex */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		36BB84001BD561D8BB6F946C /* DevSessionsWidget */ = {
+			isa = PBXGroup;
+			children = (
+				AA83EED087223F52349CC956 /* DevSessionsWidget.swift */,
+				C19A12CCDFFC4DC30EB4991E /* DevSessionsWidgetBundle.swift */,
+				E42F55A3388C0096186A23BF /* DevSessionsWidgetView.swift */,
+			);
+			path = DevSessionsWidget;
+			sourceTree = "<group>";
+		};
+		45FC3A54CE2590C4BCC545DE = {
+			isa = PBXGroup;
+			children = (
+				73D7068F80AAC31CC20D64B2 /* DevSessions */,
+				36BB84001BD561D8BB6F946C /* DevSessionsWidget */,
+				E1A2663893A11A90225F65F4 /* Packages */,
+				100ABB7A032FBB8A7FA8BB15 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		73D7068F80AAC31CC20D64B2 /* DevSessions */ = {
+			isa = PBXGroup;
+			children = (
+				23E8F1B2024C68145A24FFC8 /* AppDelegate.swift */,
+				958833A2FAF5C3AE8BC77217 /* DevSessionsApp.swift */,
+				0E4E874BAF26CCA71153D331 /* MenuBarView.swift */,
+				312389CC8655D0FA0E050C99 /* Phase0Controller.swift */,
+				C921711CBE281BC785894089 /* Phase0View.swift */,
+				344A400BA60D14AF6C862F55 /* SettingsView.swift */,
+				397EAC1ACACC75B07364657E /* TerminalLauncher.swift */,
+			);
+			path = DevSessions;
+			sourceTree = "<group>";
+		};
+		E1A2663893A11A90225F65F4 /* Packages */ = {
+			isa = PBXGroup;
+			children = (
+				B00FC8BAAD089878D01CCAF6 /* DevSessionsCore */,
+			);
+			path = Packages;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		9A47A3BE4B8AE5D16C226631 /* DevSessionsWidget */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 7C88D1D0A632129217D43CB5 /* Build configuration list for PBXNativeTarget "DevSessionsWidget" */;
+			buildPhases = (
+				69F233D43BB278394C5567B5 /* Sources */,
+				18A8C23783CBC51E91A9AE7F /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = DevSessionsWidget;
+			packageProductDependencies = (
+				E63C9ED941BDE8D4BDEE23B6 /* DevSessionsCore */,
+			);
+			productName = DevSessionsWidget;
+			productReference = 64D11289525CE80847B26A7C /* DevSessionsWidget.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
+		B6A6330DD405FD4213E1B6CF /* DevSessions */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 27AF1D18A522FB9D5D90FCD5 /* Build configuration list for PBXNativeTarget "DevSessions" */;
+			buildPhases = (
+				0470A8287AF43C0A50E43ED4 /* Sources */,
+				2348A25EEA2A0FB646043395 /* Frameworks */,
+				5F90BF1930F93FB733F6B617 /* Embed Foundation Extensions */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				5617E6BE4F600B745177958B /* PBXTargetDependency */,
+			);
+			name = DevSessions;
+			packageProductDependencies = (
+				8FEDF3DE58F0D7A367BFA807 /* DevSessionsCore */,
+			);
+			productName = DevSessions;
+			productReference = 2F6C0EC788DFBC6149A0E812 /* DevSessions.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		452E170CDAD9DF53BD5448BF /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 2710;
+				TargetAttributes = {
+					9A47A3BE4B8AE5D16C226631 = {
+						DevelopmentTeam = 67Z29VG25Z;
+						ProvisioningStyle = Automatic;
+						SystemCapabilities = {
+							com.apple.ApplicationGroups = {
+								enabled = 1;
+							};
+						};
+					};
+					B6A6330DD405FD4213E1B6CF = {
+						DevelopmentTeam = 67Z29VG25Z;
+						ProvisioningStyle = Automatic;
+						SystemCapabilities = {
+							com.apple.ApplicationGroups = {
+								enabled = 1;
+							};
+						};
+					};
+				};
+			};
+			buildConfigurationList = 9E284743BF18A6C2A1EAEF95 /* Build configuration list for PBXProject "DevSessions" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				Base,
+				en,
+			);
+			mainGroup = 45FC3A54CE2590C4BCC545DE;
+			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				5F715B87BD77416DB8116E62 /* XCLocalSwiftPackageReference "Packages/DevSessionsCore" */,
+			);
+			preferredProjectObjectVersion = 77;
+			productRefGroup = 100ABB7A032FBB8A7FA8BB15 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				B6A6330DD405FD4213E1B6CF /* DevSessions */,
+				9A47A3BE4B8AE5D16C226631 /* DevSessionsWidget */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXSourcesBuildPhase section */
+		0470A8287AF43C0A50E43ED4 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				1BD971619951ACB5B2C235D2 /* AppDelegate.swift in Sources */,
+				A9E815B070C8A9ACA811F155 /* DevSessionsApp.swift in Sources */,
+				18098F8A0D25F37EB14DDA93 /* MenuBarView.swift in Sources */,
+				32289E53C01DF8BEC4C641B1 /* Phase0Controller.swift in Sources */,
+				D41E131CE98CDB7659AA4DBE /* Phase0View.swift in Sources */,
+				966B95759F8BA23703B41FCB /* SettingsView.swift in Sources */,
+				7CE429C1E1953FC0CAB2D396 /* TerminalLauncher.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		69F233D43BB278394C5567B5 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				120733B4963C8C0C9003CA08 /* DevSessionsWidget.swift in Sources */,
+				48BBD51AFFBA4EC75BAE013C /* DevSessionsWidgetBundle.swift in Sources */,
+				25A20F8EFCB7E99B38535B8A /* DevSessionsWidgetView.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		5617E6BE4F600B745177958B /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 9A47A3BE4B8AE5D16C226631 /* DevSessionsWidget */;
+			targetProxy = 4DDD06533324A81A9AB2D542 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		4411277DEEB850E7498717FF /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEAD_CODE_STRIPPING = YES;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = 67Z29VG25Z;
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MARKETING_VERSION = 0.1.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+		642EF23E6298C842DBCE3823 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = "";
+				CODE_SIGN_ENTITLEMENTS = Config/DevSessions.entitlements;
+				COMBINE_HIDPI_IMAGES = YES;
+				DEAD_CODE_STRIPPING = YES;
+				ENABLE_APP_SANDBOX = NO;
+				ENABLE_HARDENED_RUNTIME = YES;
+				INFOPLIST_FILE = "Config/DevSessions-Info.plist";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.devsessions.app;
+				PRODUCT_NAME = DevSessions;
+				REGISTER_APP_GROUPS = YES;
+				SDKROOT = macosx;
+			};
+			name = Release;
+		};
+		9B6FB3C1D113C4AF44F1EFA9 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				CODE_SIGN_ENTITLEMENTS = Config/DevSessionsWidget.entitlements;
+				COMBINE_HIDPI_IMAGES = YES;
+				DEAD_CODE_STRIPPING = YES;
+				ENABLE_APP_SANDBOX = YES;
+				ENABLE_INCOMING_NETWORK_CONNECTIONS = NO;
+				ENABLE_OUTGOING_NETWORK_CONNECTIONS = NO;
+				ENABLE_RESOURCE_ACCESS_AUDIO_INPUT = NO;
+				ENABLE_RESOURCE_ACCESS_BLUETOOTH = NO;
+				ENABLE_RESOURCE_ACCESS_CALENDARS = NO;
+				ENABLE_RESOURCE_ACCESS_CAMERA = NO;
+				ENABLE_RESOURCE_ACCESS_CONTACTS = NO;
+				ENABLE_RESOURCE_ACCESS_LOCATION = NO;
+				ENABLE_RESOURCE_ACCESS_PRINTING = NO;
+				ENABLE_RESOURCE_ACCESS_USB = NO;
+				ENABLE_USER_SELECTED_FILES = readwrite;
+				INFOPLIST_FILE = "Config/DevSessionsWidget-Info.plist";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@executable_path/../../../../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.devsessions.app.widget;
+				PRODUCT_NAME = DevSessionsWidget;
+				REGISTER_APP_GROUPS = YES;
+				SDKROOT = macosx;
+				SKIP_INSTALL = YES;
+			};
+			name = Release;
+		};
+		B24ED5300C54E649F271EBD4 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = "";
+				CODE_SIGN_ENTITLEMENTS = Config/DevSessions.entitlements;
+				COMBINE_HIDPI_IMAGES = YES;
+				DEAD_CODE_STRIPPING = YES;
+				ENABLE_APP_SANDBOX = NO;
+				ENABLE_HARDENED_RUNTIME = YES;
+				INFOPLIST_FILE = "Config/DevSessions-Info.plist";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.devsessions.app;
+				PRODUCT_NAME = DevSessions;
+				REGISTER_APP_GROUPS = YES;
+				SDKROOT = macosx;
+			};
+			name = Debug;
+		};
+		CF19C7D2BCF6B44916849E39 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				CODE_SIGN_ENTITLEMENTS = Config/DevSessionsWidget.entitlements;
+				COMBINE_HIDPI_IMAGES = YES;
+				DEAD_CODE_STRIPPING = YES;
+				ENABLE_APP_SANDBOX = YES;
+				ENABLE_INCOMING_NETWORK_CONNECTIONS = NO;
+				ENABLE_OUTGOING_NETWORK_CONNECTIONS = NO;
+				ENABLE_RESOURCE_ACCESS_AUDIO_INPUT = NO;
+				ENABLE_RESOURCE_ACCESS_BLUETOOTH = NO;
+				ENABLE_RESOURCE_ACCESS_CALENDARS = NO;
+				ENABLE_RESOURCE_ACCESS_CAMERA = NO;
+				ENABLE_RESOURCE_ACCESS_CONTACTS = NO;
+				ENABLE_RESOURCE_ACCESS_LOCATION = NO;
+				ENABLE_RESOURCE_ACCESS_PRINTING = NO;
+				ENABLE_RESOURCE_ACCESS_USB = NO;
+				ENABLE_USER_SELECTED_FILES = readwrite;
+				INFOPLIST_FILE = "Config/DevSessionsWidget-Info.plist";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@executable_path/../../../../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.devsessions.app.widget;
+				PRODUCT_NAME = DevSessionsWidget;
+				REGISTER_APP_GROUPS = YES;
+				SDKROOT = macosx;
+				SKIP_INSTALL = YES;
+			};
+			name = Debug;
+		};
+		D5E1534906DB794EE2BC6911 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEAD_CODE_STRIPPING = YES;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = 67Z29VG25Z;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"DEBUG=1",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MARKETING_VERSION = 0.1.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		27AF1D18A522FB9D5D90FCD5 /* Build configuration list for PBXNativeTarget "DevSessions" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				B24ED5300C54E649F271EBD4 /* Debug */,
+				642EF23E6298C842DBCE3823 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		7C88D1D0A632129217D43CB5 /* Build configuration list for PBXNativeTarget "DevSessionsWidget" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				CF19C7D2BCF6B44916849E39 /* Debug */,
+				9B6FB3C1D113C4AF44F1EFA9 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		9E284743BF18A6C2A1EAEF95 /* Build configuration list for PBXProject "DevSessions" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				D5E1534906DB794EE2BC6911 /* Debug */,
+				4411277DEEB850E7498717FF /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+/* End XCConfigurationList section */
+
+/* Begin XCLocalSwiftPackageReference section */
+		5F715B87BD77416DB8116E62 /* XCLocalSwiftPackageReference "Packages/DevSessionsCore" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = Packages/DevSessionsCore;
+		};
+/* End XCLocalSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		8FEDF3DE58F0D7A367BFA807 /* DevSessionsCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = DevSessionsCore;
+		};
+		E63C9ED941BDE8D4BDEE23B6 /* DevSessionsCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = DevSessionsCore;
+		};
+/* End XCSwiftPackageProductDependency section */
+	};
+	rootObject = 452E170CDAD9DF53BD5448BF /* Project object */;
+}

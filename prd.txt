@@ -1,0 +1,581 @@
+# DevSessions — Product Requirements Document
+
+**MVP, revised after validating local agent data and macOS platform constraints**
+
+| | |
+|---|---|
+| Platform | macOS 14 or later |
+| Type | Native desktop widget + menu bar companion app |
+| Stack | Swift, SwiftUI, WidgetKit, AppKit (URL handling and Terminal launch) |
+| Supported agents | OpenCode, Claude Code, Codex, Pi, Oh My Pi |
+| Distribution | Direct download, Developer ID signed and notarized (not Mac App Store) |
+| Status | Draft v3 |
+
+---
+
+## 1. Overview
+
+DevSessions is a lightweight macOS widget that shows recently active AI coding sessions from OpenCode, Claude Code, Codex CLI, Pi, and Oh My Pi, and resumes any session in Terminal with one click.
+
+It removes the need to remember session IDs, locate project directories, or type resume commands.
+
+**Core flow: Discover → Display → Click → Resume.**
+
+The widget is a read-only presentation layer. A non-sandboxed companion app performs discovery, maintains a shared cache, and launches Terminal. This split is required by macOS and is the central architectural decision of the product.
+
+---
+
+## 2. Goals and non-goals
+
+### Goals
+
+- Automatically discover saved sessions from all five supported agents without manual registration.
+- Show the most recently active sessions, sorted by last activity.
+- Default to the last 7 days, with selectable windows of 1, 3, 7, 14, or 30 days.
+- Display the most recent sessions that fit the widget size.
+- Resume the exact saved conversation in Terminal in the original project directory with one click.
+- Keep session data fresh in the background with minimal configuration.
+- Keep all data local. No cloud service, account, telemetry, or AI model is required.
+
+### Non-goals for MVP
+
+- Search, pinning, project grouping, or session content preview.
+- Running-process detection or “currently open” status.
+- Terminal alternatives such as iTerm or Warp.
+- Mac App Store distribution.
+- Cloud sync, accounts, or remote sessions.
+- Auto-update.
+- Migrating or repairing agent session data.
+- Supporting every historical version of every agent format.
+
+---
+
+## 3. Product constraints from research
+
+These constraints are part of the product definition, not implementation details.
+
+1. **WidgetKit cannot do the core work.**
+   - A widget extension is sandboxed and cannot read `~/.claude`, `~/.codex`, `~/.pi`, `~/.omp`, or the OpenCode data directory.
+   - A widget extension cannot launch Terminal or run a process.
+   - The widget can read an App Group container and open the host app through a `Link`/URL scheme.
+   - Therefore: the host app discovers sessions, writes a shared cache, and handles resume. The widget renders the cache and deep-links back to the host app.
+
+2. **The host app must be non-sandboxed.**
+   - Automatic discovery requires reading agent data outside the app container.
+   - This rules out Mac App Store distribution. DevSessions ships as a Developer ID, notarized direct download.
+   - The widget extension itself remains sandboxed.
+
+3. **There is no stable cross-project session-list API.**
+   - `opencode session list --format json` is scoped to the current project only.
+   - Claude Code, Codex, Pi, and Oh My Pi expose interactive resume pickers or local session files, not a cross-project machine-readable list.
+   - DevSessions must read each agent’s local metadata directly. Adapters are a first-class part of the product.
+
+4. **The formats are versioned and undocumented.**
+   - OpenCode has already moved between a legacy `session` table and `session_v2`.
+   - Codex now stores session metadata in `state_*.sqlite` and compresses rollouts with zstd.
+   - Claude Code stores sessions as JSONL files.
+   - Pi stores sessions as JSONL; Oh My Pi is a Pi fork that adds a fixed-width title slot ahead of the session header.
+   - Every adapter must detect its expected schema and fail independently, without breaking the other adapters or the widget.
+
+5. **Background freshness needs a running companion.**
+   - Widget timelines alone cannot rescan local files frequently enough.
+   - The host app runs as a menu bar agent and refreshes on launch, periodically, on wake, manually, and after a resume.
+   - Launch at login is on by default, with a visible opt-out.
+
+6. **Terminal launching must avoid unnecessary permissions.**
+   - AppleScript control of Terminal triggers an Automation permission prompt.
+   - The host app writes a temporary `.command` file and opens it with Terminal.app. This requires no Automation permission.
+   - The CLI executable must be resolved to an absolute path because GUI apps do not inherit the user’s shell PATH.
+
+---
+
+## 4. Supported agents and data sources
+
+Source formats verified against OpenCode 2.2.1, Claude Code 2.1.296, Codex CLI 0.162.1, and Pi 1.2.0. Oh My Pi 18.14.0 is supported from its documented session format. Oh My Pi is not installed on the current development machine, so its adapter will be fixture-tested until `omp` is installed and a real session exists.
+
+| Agent | Primary local source | Session fields | Activity timestamp | Resume command |
+|---|---|---|---|---|
+| OpenCode | `~/.local/share/opencode/opencode.db` → `session_v2` (fallback: `session`) | `id`, `title`, `slug`, `directory`, `parent_id`, `time_archived` | `time_updated` (ms) | `opencode --session <id>` |
+| Claude Code | `~/.claude/projects/*/*.jsonl` | session ID from filename; `cwd`, `slug`, first user prompt | file modification time | `claude --resume <id>` |
+| Codex CLI | `~/.codex/state_*.sqlite` → `threads` | `id`, `cwd`, `title`, `name`, `updated_at_ms`, `archived` | `updated_at_ms` | `codex resume <id>` |
+| Pi | `~/.pi/agent/sessions/<encoded-cwd>/*.jsonl` | `type: "session"` header with `id`, `cwd`, `timestamp`; `session_info.name`; first user prompt | file modification time | `pi --session <id>` |
+| Oh My Pi | `~/.omp/agent/sessions/<encoded-cwd>/*.jsonl` | optional 256-byte `type: "title"` slot; `type: "session"` header with `id`, `cwd`, `title`; first user prompt | file modification time | `omp --resume <id>` |
+
+### Adapter rules
+
+**OpenCode**
+- Prefer `session_v2`. Use `session` only when `session_v2` does not exist.
+- Exclude rows where `parent_id` is not null (subagent sessions).
+- Exclude rows where `time_archived` is not null.
+- Title: `title`, then `slug`, then “Untitled session”.
+- Project path: `directory`; project name: the last path component, or the joined project name if available.
+- Open the database read-only, with a busy timeout. Do not query `message` or `part`.
+- The database can be multiple gigabytes; never copy or scan the whole file.
+- If the DB path is not at the default location, `opencode debug paths` can be used to locate it.
+
+**Claude Code**
+- Scan only `~/.claude/projects/<project>/*.jsonl`; skip nested subagent transcripts.
+- Require the filename to be a UUID.
+- Read only the head of each file (for example, the first 64–256 KB) to find `cwd`, `slug`, and the first user prompt. Do not read the whole transcript.
+- Skip sessions whose first user record is a sidechain.
+- Title preference: latest `summary` record if present → first substantive user prompt (skip environment/context-only records) → `slug` → “Untitled session”.
+- Activity: file modification time. It is cheap and updates when the agent writes.
+- Do not rely on decoding the encoded project directory name; read `cwd` from the JSONL.
+- Skip malformed lines and continue.
+
+**Codex CLI**
+- Discover the newest `state_*.sqlite` that contains a `threads` table.
+- Exclude `archived = 1`.
+- Title preference: `name` → `title` → “Untitled session”. Normalize newlines and whitespace, then truncate.
+- Activity: `updated_at_ms`, falling back to `updated_at * 1000`.
+- Include all non-archived Codex threads for MVP, including `exec` and IDE-originated sessions. An interactive-only filter is future work.
+- If no state database is available, support plain `.jsonl` rollouts under `~/.codex/sessions/` as a best-effort fallback: derive the ID and timestamp from the filename/first line and the working directory from the rollout’s environment context. `.jsonl.zst`-only sessions without a state database are unsupported and reported in diagnostics.
+- Do not decompress rollouts when the state database already provides metadata.
+
+**Pi**
+- Scan only direct `*.jsonl` files under `~/.pi/agent/sessions/<encoded-cwd>/`; skip nested subagent transcripts.
+- Pi session files are JSONL. The first logical entry is a `type: "session"` header with `id`, `timestamp`, and `cwd`.
+- Title preference: latest `session_info.name` → first substantive user prompt → “Untitled session”.
+- Activity: file modification time.
+- Resume: `pi --session <id>` in the project directory. The full session ID is used even though Pi accepts partial IDs.
+- Default agent directory only for MVP. `PI_CODING_AGENT_DIR` and `PI_CODING_AGENT_SESSION_DIR` overrides are future work.
+
+**Oh My Pi**
+- Oh My Pi (`omp`) is a fork of Pi. Use the same Pi-family JSONL parser with a different root and resume command.
+- Scan only direct `*.jsonl` files under `~/.omp/agent/sessions/<encoded-cwd>/`; skip nested subagent directories.
+- OMP files may begin with a fixed-width 256-byte `type: "title"` slot before the `type: "session"` header. Parse or skip it safely, then read the header and entries.
+- Title preference: title slot/header `title` → latest `session_info.name` if present → first substantive user prompt → “Untitled session”.
+- Activity: file modification time.
+- Resume: `omp --resume <id>` in the project directory. OMP accepts an ID or a path; the full ID is used.
+- Default profile only for MVP. Named profiles (`OMP_PROFILE`) and XDG data/state overrides are future work.
+- OMP 18.14.0 format is documented; runtime validation is pending `omp` installation and a saved session.
+
+**Shared rules**
+- Normalize titles to a single line and truncate for the widget.
+- Ignore sessions with missing IDs, missing project paths, or invalid timestamps.
+- One adapter failure must never prevent the other agents from appearing.
+- Preserve the last successful cache when a scan fails.
+- Record per-agent diagnostics for the settings screen. Diagnostics must not contain prompt text.
+
+---
+
+## 5. Functional requirements
+
+### FR-1 Automatic session discovery — Must
+
+On launch and on each refresh, the host app scans all supported agent stores and builds one merged list of resumable sessions. No manual session registration is required.
+
+A session is resumable when:
+- It has a stable session ID.
+- It has a project directory.
+- It is not a child/subagent session.
+- It is not archived.
+- It falls within the configured activity window.
+
+### FR-2 Recent filtering and sorting — Must
+
+- Default window: 7 days.
+- Selectable windows: 1, 3, 7, 14, or 30 days.
+- Activity means the last recorded interaction with the saved conversation, not whether its terminal process is running.
+- Sort by activity descending.
+- Closed sessions remain eligible.
+- Sessions older than the selected window are not displayed.
+- The setting is stored in shared state and applied by the widget immediately after the app reloads it.
+
+### FR-3 Desktop widget — Must
+
+The widget shows, per session:
+- Project name.
+- Agent name.
+- Session title.
+- Relative last-active time.
+- A resume affordance.
+
+The widget also shows:
+- A header with the DevSessions name and a settings link.
+- A footer showing the active window, for example “Last 7 days”.
+- An empty state when no sessions match.
+- A “Open DevSessions to scan” state when no cache exists.
+
+The widget is display-only + deep links. It must not attempt to scan metadata or run commands.
+
+### FR-4 One-click resume — Must
+
+Clicking a session:
+1. Opens the DevSessions host app via a deep link.
+2. The host app validates the agent and session ID against the current cache.
+3. The host app verifies that the project directory still exists.
+4. The host app resolves the agent executable to an absolute path.
+5. The host app writes a temporary `.command` file and opens it with Terminal.app.
+6. The `.command` file changes to the project directory and executes the agent-specific resume command.
+7. The exact saved conversation opens, ready for continued work.
+8. The app triggers a refresh after launch so the session’s activity timestamp can move up.
+
+If the project directory or CLI is missing, the app shows a clear error and does not execute a partial command.
+
+### FR-5 Background refresh — Must
+
+The menu bar app refreshes:
+- At launch and login.
+- Every 5 minutes while running.
+- When the Mac wakes from sleep.
+- When the user chooses “Refresh Now”.
+- Shortly after a resume.
+
+After each successful scan it writes the shared cache and asks WidgetKit to reload if the displayed data changed.
+
+Launch at login is requested by default during onboarding using the native login-item API, with a visible toggle in settings and the usual macOS approval/System Settings behavior.
+
+### FR-6 Activity window setting — Should
+
+A settings control offers 1, 3, 7, 14, and 30 days. Changes rewrite shared state and reload the widget. No other configuration is required.
+
+### FR-7 Onboarding — Must
+
+On first launch, the host app explains:
+1. Which agents and how many sessions were detected.
+2. How to add the widget (macOS does not allow the app to add it programmatically).
+3. The launch-at-login toggle, with a short explanation of why it is needed for freshness.
+
+The app must not show onboarding when it is launched by a widget resume link after setup.
+
+### FR-8 Diagnostics — Should
+
+The settings screen shows:
+- Per-agent status: OK, unsupported format, not installed, or error.
+- Session counts per agent.
+- Last successful scan time.
+- A “Refresh Now” action.
+
+Diagnostics must never log or display session titles or prompt content in error messages.
+
+### FR-9 Privacy and security — Must
+
+- All processing is local. No network requests, telemetry, analytics, or AI services.
+- Shared state is written only to the App Group container with owner-only permissions.
+- Session titles may contain sensitive prompt content; do not log them.
+- Deep links are untrusted input. Validate the agent, validate the session ID format, and require a matching session in the current cache.
+- Never build shell commands from arbitrary URL parameters.
+- Shell-quote project paths and session IDs.
+- Do not execute anything when the project directory no longer exists.
+
+---
+
+## 6. Widget UI
+
+### Layout
+
+```
+┌──────────────────────────────────────┐
+│  ◈ DevSessions               ⚙       │
+│                                      │
+│  DAFE                       20m ago  │
+│  OpenCode · Feature generation   ↗   │
+│                                      │
+│  PruneGen                    2h ago  │
+│  Claude · Feature pruning        ↗   │
+│                                      │
+│  Decision Gateway            2d ago  │
+│  Codex · Architecture            ↗   │
+│                                      │
+│  Last 7 days                         │
+└──────────────────────────────────────┘
+```
+
+Pi and Oh My Pi use the same row format with their own agent labels; the example shows only three of the five supported agents.
+
+### Sizing
+
+- Small: 1–2 most recent sessions.
+- Medium: 3 most recent sessions.
+- Large: 6–7 most recent sessions.
+- No scrolling. Exact row counts are tuned in Xcode previews against the shipping macOS widget sizes.
+
+### Interaction
+
+- Each session row is a `Link` to `devsessions://resume?agent=<agent>&id=<session-id>`.
+- The gear is a `Link` to `devsessions://settings`.
+- Do not use `Button` for row actions; widgets support links and App Intents, not arbitrary buttons.
+- The whole row must be clickable, not only the arrow.
+- Provide an accessibility label such as “Resume Feature generation in DAFE”.
+
+### Visual
+
+- Native widget container background and semantic colors.
+- Minimal typography consistent with macOS widgets.
+- Project name primary; agent and title secondary; relative time trailing.
+- One line per field, truncating long titles.
+- No custom window chrome, hover-only controls, or animations.
+- Works in light and dark appearance.
+
+### Time and expiry
+
+- Use relative date text so “20m ago” updates automatically.
+- The list is refreshed by the app when data changes and the widget requests a timeline refresh every 15 minutes (actual scheduling is subject to WidgetKit budgets).
+- A session crossing the activity-window boundary disappears at the next widget reload; target latency is 15 minutes, subject to WidgetKit scheduling.
+
+---
+
+## 7. Technical architecture
+
+```
+OpenCode DB    ─┐
+Claude JSONL   ─┤
+Codex SQLite   ─┼─► Host app (non-sandboxed, menu bar)
+Pi JSONL       ─┤        │  scan every 5 min / wake / manual
+OMP JSONL      ─┘        │  resolve CLI paths, validate, launch
+                         ├──────────────► Terminal.app (.command)
+                         ▼
+                App Group shared state
+                         ▼
+                Widget extension (sandboxed)
+                   render + Link → devsessions://
+```
+
+### Components
+
+**`DevSessionsCore` (shared Swift package)**
+- Session model and agent enum.
+- Three adapters.
+- Merge, filter, sort, and title normalization.
+- Shared-state encoding/decoding.
+- Resume command construction and validation.
+- Unit tests and fixtures.
+
+**`DevSessions` host app**
+- `LSUIElement` menu bar app; no Dock icon during normal use.
+- One-time onboarding/settings window.
+- Scan scheduler and login item.
+- URL scheme handler.
+- Terminal launcher.
+- Cache writer and widget reload.
+
+**`DevSessionsWidget` extension**
+- Reads shared state only.
+- Applies the activity window.
+- Renders rows and deep links.
+- Provides previews with sample data.
+
+**No** backend, database of our own, third-party dependency, or network layer.
+
+### Shared state contract
+
+A single JSON file in the App Group container, for example:
+
+```json
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-10-30T00:00:00Z",
+  "activityWindowDays": 7,
+  "sessions": [
+    {
+      "agent": "opencode",
+      "id": "ses_abc123",
+      "projectName": "DAFE",
+      "projectPath": "/Users/dev/projects/dafe",
+      "title": "Feature generation",
+      "lastActive": "2026-10-29T23:40:00Z"
+    }
+  ],
+  "diagnostics": [
+    {
+      "agent": "codex",
+      "status": "ok",
+      "sessionCount": 12,
+      "message": null
+    }
+  ]
+}
+```
+
+Rules:
+- Atomic writes; owner-only permissions.
+- Maximum 200 sessions, limited to the 30-day maximum window.
+- Widget filters using `activityWindowDays`.
+- Reload the widget only when sessions, window, or diagnostics change; ignore `generatedAt` when comparing.
+- Decode failures show the widget’s empty/unavailable state; they must not crash the extension.
+
+### Deep links
+
+- `devsessions://resume?agent=opencode|claude|codex|pi|omp&id=<id>`
+- `devsessions://settings`
+
+Validation:
+- OpenCode ID: `^ses_[A-Za-z0-9]+$`.
+- Claude/Codex ID: UUID format.
+- Pi/Oh My Pi ID: `^[A-Za-z0-9](?:[A-Za-z0-9._-]*[A-Za-z0-9])?$`.
+- The ID must exist in the current cache. If missing, rescan once; if still missing, show an error.
+- The project path must be a directory.
+- Resolve the executable before writing the command file.
+
+### Terminal launch
+
+- Resolve the agent executable via known install locations and a login-shell lookup. Never rely on the host app’s inherited PATH.
+- Write a `.command` file to the app’s Application Support directory with mode `0700`.
+- Content pattern:
+
+```zsh
+#!/bin/zsh -l
+cd -- '/absolute/project/path' || exit 1
+exec '/absolute/path/to/agent' <resume arguments>
+```
+
+- Open the file with Terminal.app through `NSWorkspace`.
+- Do not use AppleScript or `osascript`; avoid the Automation permission prompt.
+- Clean up command files older than 24 hours at launch.
+- After launching, hide the host app if it was in the background and refresh the cache after a short delay.
+
+### Distribution and signing
+
+- Direct download DMG or zip containing `DevSessions.app` and the embedded widget extension.
+- Developer ID Application signing, hardened runtime, notarization, and stapling.
+- App Group entitlement shared by the host app and widget extension.
+- The host app is not sandboxed; the widget extension is sandboxed.
+- Mac App Store distribution is out of scope because the host app requires file access outside its container.
+
+### Build prerequisites
+
+- Xcode with the installed macOS SDK. Command Line Tools alone are not sufficient for the widget extension.
+- An Apple Developer team/signing identity for the App Group entitlement.
+- A paid Developer ID for public notarized distribution.
+
+---
+
+## 8. Non-functional requirements
+
+### Performance
+
+- A normal scan should complete in well under one second on a developer Mac.
+- Read only the metadata needed; never read full transcripts or the OpenCode message tables.
+- Cap cached sessions at 200.
+- Do not allow overlapping scans.
+- Widget render should be effectively instantaneous from the cached JSON.
+
+### Reliability
+
+- Use SQLite busy timeouts and treat a locked database as a retryable adapter error.
+- Keep the previous cache if a scan fails entirely.
+- Skip malformed JSONL lines and continue.
+- Isolate failures per agent.
+- Cache writes are atomic.
+
+### Privacy
+
+- No network access.
+- No analytics or crash reporting that includes session content.
+- Titles and paths are sensitive; keep them out of logs.
+- Shared state is confined to the App Group container.
+
+### Accessibility and appearance
+
+- Semantic colors and Dynamic Type-safe layout.
+- Descriptive accessibility labels for resume links.
+- Light and dark appearance.
+- Long titles truncate without breaking layout.
+
+### Compatibility
+
+- Target macOS 14 or later.
+- Universal binary for Apple Silicon and Intel.
+- Source formats verified against OpenCode 2.2.1, Claude Code 2.1.296, Codex CLI 0.162.1, and Pi 1.2.0.
+- Oh My Pi 18.14.0 is supported from its documented session format; runtime validation requires `omp` installed and at least one saved session.
+- Unknown future schemas produce a diagnostic; they do not crash the app or hide other agents.
+
+---
+
+## 9. MVP scope
+
+| Requirement | Priority |
+|---|---|
+| Discover saved sessions from OpenCode, Claude Code, Codex, Pi, and Oh My Pi | Must |
+| Exclude child/archived/sidechain sessions | Must |
+| Filter by last activity; default 7 days | Must |
+| Configurable window: 1/3/7/14/30 days | Should |
+| Display sessions in a native macOS widget | Must |
+| Show correct content per widget size | Must |
+| One-click resume from the widget | Must |
+| Open Terminal in the original project directory | Must |
+| Launch at login / background refresh | Must |
+| Onboarding with widget instructions | Must |
+| Per-agent diagnostics | Should |
+| Search, pinning, project grouping | Later |
+| iTerm/Warp, process detection, App Store, auto-update | Later |
+
+---
+
+## 10. Acceptance criteria
+
+The MVP is complete when a developer can:
+
+1. Install DevSessions from a notarized DMG and launch it.
+2. Add the DevSessions widget to the macOS desktop.
+3. See recent OpenCode, Claude Code, Codex, Pi, and Oh My Pi sessions automatically, sorted by activity.
+4. Switch the activity window between 1, 3, 7, 14, and 30 days and see the list update.
+5. Click any session and continue the exact conversation in Terminal in the original project directory.
+6. Close a session, reopen the widget later, and still see it if it is inside the window.
+7. Resume a session, send a new message, and see it move up after the next refresh.
+8. Let a session age past the window and see it disappear at the next widget refresh (target: within 15 minutes, subject to WidgetKit scheduling).
+9. Use the product without ever seeing or typing a session ID or resume command.
+10. Break or remove one agent’s data and still see the other agents, with a diagnostics message in the app.
+
+Test note (October 2026 development machine): Claude and Codex activity was older than 7 days during initial validation. Pi has no saved sessions yet, and Oh My Pi is not installed. Use the 14- or 30-day window or create fresh sessions for existing agents; install `omp` and create a Pi session for end-to-end validation of the two new adapters.
+
+---
+
+## 11. Risks and mitigations
+
+| Risk | Impact | Mitigation |
+|---|---|---|
+| Agent formats change | Discovery silently breaks | Schema detection, adapter isolation, fixture tests, diagnostics, supported-version matrix |
+| App Group/signing setup fails | Widget cannot read cache | Phase 0 walking skeleton validates signing, App Group, widget, and deep link before feature work |
+| Widget data goes stale | “Automatic” promise fails | Menu bar agent, launch at login, 5-minute scan, reload on change, 15-minute timeline fallback |
+| GUI PATH cannot find agents | Resume fails | Resolve absolute CLI paths via known locations plus login-shell lookup |
+| Session/project injection or shell quoting bug | Security issue | Validate IDs against cache, restrict ID formats, quote all shell arguments, validate directories |
+| Codex `exec`/IDE sessions clutter the list | Poor signal | Include all non-archived threads for MVP; add an interactive-only filter later |
+| Pi/Oh My Pi fork formats drift | Discovery or resume breaks for the new agents | Shared Pi-family parser, header/title-slot detection, fixtures, per-agent diagnostics, and a supported-version matrix |
+| Oh My Pi not installed on the development machine | No runtime proof for OMP | Fixture-test the documented format, then install `omp`, create a session, and run the same acceptance test |
+| Sensitive prompt text in cache | Privacy exposure | App Group-only storage, 0600 permissions, no title logging, local-only processing |
+| No Mac App Store path | Distribution limitation | Explicit direct-distribution decision; document it |
+
+---
+
+## 12. Delivery phases
+
+| Phase | Focus | Exit criteria | Estimate |
+|---|---|---|---|
+| 0 | Platform walking skeleton | Xcode project, app + widget, App Group, signing, widget reading a test file, deep link, Terminal `.command` launch | 0.5–1 day |
+| 1 | Discovery core | `DevSessionsCore` adapters and tests; 30-day scan from all five agents; Pi-family parser shared by Pi and Oh My Pi; malformed data isolated | 3–4 days |
+| 2 | Host app | Menu bar app, scheduler, cache, settings/onboarding, login item, URL handling, resume launcher | 1.5–2 days |
+| 3 | Widget UI | Small/medium/large layouts, links, window filtering, empty states, accessibility | 1–1.5 days |
+| 4 | Ship | Clean-install E2E, notarization, DMG, README/privacy note, acceptance checklist | 1–1.5 days |
+
+Total: approximately 8–11 days including buffer. Phase 0 is a gate; do not build the adapters and UI first and discover signing problems last.
+
+---
+
+## 13. Future work
+
+- Search, pinning, and project grouping.
+- iTerm/Warp support and reusable Terminal windows/tabs.
+- Widget configuration via App Intents for the activity window.
+- Interactive-only Codex filter.
+- Legacy OpenCode JSON storage and zstd-only Codex fallback.
+- Pi/Oh My Pi named profiles, XDG paths, and non-default session directories.
+- Hide-titles/privacy mode.
+- Auto-update.
+- Session usage/statistics.
+
+---
+
+## 14. Key changes from the original PRD
+
+- Added the mandatory split between the non-sandboxed host app and the sandboxed widget extension.
+- Added App Group shared state, background refresh, and launch-at-login.
+- Replaced “CLI interfaces or metadata” with verified per-agent sources and resume commands.
+- Documented schema/version risk and adapter isolation.
+- Defined title fallbacks because Claude has no summary and Codex titles are prompts.
+- Replaced AppleScript with a permission-free `.command` + Terminal launch.
+- Added direct-distribution/signing constraints and removed the implied Mac App Store path.
+- Added security, privacy, diagnostics, acceptance, and scope details.
+- Expanded support from three agents to five: OpenCode, Claude Code, Codex, Pi, and Oh My Pi.
+- Added the shared Pi-family parser for Pi and Oh My Pi JSONL sessions, including OMP’s title slot.
