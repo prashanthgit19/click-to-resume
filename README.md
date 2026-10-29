@@ -4,7 +4,7 @@ DevSessions is a macOS widget plus menu bar companion app that shows recently ac
 
 Phases 0–2.1 are complete: the app, widget, App Group, deep link, terminal hand-off, five-agent discovery, real cache, scheduler, settings, global terminal preference, and real resume paths are implemented.
 
-See `prd.txt` for the full product requirements.
+See `prd.txt` for the full product requirements and `PRIVACY.md` for the local-data policy.
 
 ## What is implemented
 
@@ -14,6 +14,7 @@ See `prd.txt` for the full product requirements.
 - Real resume commands with absolute CLI paths.
 - Global terminal preference: Terminal.app (default) and Ghostty.
 - 1/3/7/14/30-day activity window, diagnostics, launch-at-login, and background refresh.
+- App icon and Release DMG packaging.
 
 ## Current validation status
 
@@ -85,7 +86,9 @@ If the app shows an App Group error, signing/App Group setup is not complete. If
 make check      # build the core and run its assertions
 make lint       # validate plists and entitlements
 make verify     # core checks + plist lint + host/widget type checks
+make icons      # regenerate the app icon asset catalog
 make project    # regenerate DevSessions.xcodeproj from project.yml
+make release    # Release build + DMG in dist/
 ```
 
 Run the discovery scanner against the real home directory:
@@ -129,17 +132,35 @@ prd.txt                   Product requirements
 - The host app is intentionally not sandboxed; the widget extension is sandboxed.
 - No network access, analytics, or third-party dependencies are used.
 
+## Release packaging
+
+Build a Release app and DMG:
+
+```sh
+make release
+# dist/DevSessions-0.1.0.dmg
+```
+
+The local Release build uses the Apple Development certificate. For public distribution, set a Developer ID identity and notarization credentials:
+
+```sh
+DEVELOPER_ID_APPLICATION="Developer ID Application: ..." \
+APPLE_ID="..." \
+APPLE_TEAM_ID="..." \
+APPLE_APP_PASSWORD="..." \
+make release
+```
+
+The packaging script signs with the supplied Developer ID, submits the DMG to `notarytool`, and staples it when all three Apple credentials are present. Without them, the DMG is a local Apple Development build and is not suitable for public download.
+
 ## Next phase
-
-Phase 3 is widget polish:
-
-- Tune row counts and spacing against the shipping widget sizes.
-- Add the remaining empty/partial-data states and accessibility details.
-- Verify all five agent labels and long-title truncation in light and dark appearance.
 
 Phase 4 is public distribution:
 
-- Release build with Developer ID signing and notarization.
-- DMG, clean-install test, README/privacy note, and final acceptance checklist.
+- Developer ID signing and notarization (requires the paid Apple Developer Program).
+- Clean-install test from the DMG.
+- Final privacy note and release checklist.
+
+The Phase 3 widget redesign is parked locally on the `phase3-attempt` branch. The shipping widget is the working Phase 2.1 layout; the Phase 3 work should be reintroduced incrementally later.
 
 Pi and Oh My Pi still need one real session each for live end-to-end validation. Their adapters are fixture-tested and installed. Ghostty’s no-Automation launch path is verified; AppleScript window reuse remains future work.

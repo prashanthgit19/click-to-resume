@@ -22,6 +22,7 @@
 		A9E815B070C8A9ACA811F155 /* DevSessionsApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 958833A2FAF5C3AE8BC77217 /* DevSessionsApp.swift */; };
 		D41E131CE98CDB7659AA4DBE /* Phase0View.swift in Sources */ = {isa = PBXBuildFile; fileRef = C921711CBE281BC785894089 /* Phase0View.swift */; };
 		DCE00F8251AB64F5AB9B90FE /* AgentExecutableResolver.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2D606A8C988A20BBA6AAF9EA /* AgentExecutableResolver.swift */; };
+		E4DBF1264B2B9067AB39EE29 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 6A293B3843362034C860EAB7 /* Assets.xcassets */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -58,6 +59,7 @@
 		397EAC1ACACC75B07364657E /* TerminalLauncher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TerminalLauncher.swift; sourceTree = "<group>"; };
 		538F5624C78AD2E0D56E9C3E /* TerminalPreferences.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TerminalPreferences.swift; sourceTree = "<group>"; };
 		64D11289525CE80847B26A7C /* DevSessionsWidget.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = DevSessionsWidget.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		6A293B3843362034C860EAB7 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		958833A2FAF5C3AE8BC77217 /* DevSessionsApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DevSessionsApp.swift; sourceTree = "<group>"; };
 		AA83EED087223F52349CC956 /* DevSessionsWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DevSessionsWidget.swift; sourceTree = "<group>"; };
 		B00FC8BAAD089878D01CCAF6 /* DevSessionsCore */ = {isa = PBXFileReference; lastKnownFileType = folder; name = DevSessionsCore; path = Packages/DevSessionsCore; sourceTree = SOURCE_ROOT; };
@@ -120,6 +122,7 @@
 			children = (
 				2D606A8C988A20BBA6AAF9EA /* AgentExecutableResolver.swift */,
 				23E8F1B2024C68145A24FFC8 /* AppDelegate.swift */,
+				6A293B3843362034C860EAB7 /* Assets.xcassets */,
 				958833A2FAF5C3AE8BC77217 /* DevSessionsApp.swift */,
 				0E4E874BAF26CCA71153D331 /* MenuBarView.swift */,
 				312389CC8655D0FA0E050C99 /* Phase0Controller.swift */,
@@ -166,6 +169,7 @@
 			buildConfigurationList = 27AF1D18A522FB9D5D90FCD5 /* Build configuration list for PBXNativeTarget "DevSessions" */;
 			buildPhases = (
 				0470A8287AF43C0A50E43ED4 /* Sources */,
+				E9F4E0867DB7B372462B7362 /* Resources */,
 				2348A25EEA2A0FB646043395 /* Frameworks */,
 				5F90BF1930F93FB733F6B617 /* Embed Foundation Extensions */,
 			);
@@ -233,6 +237,17 @@
 			);
 		};
 /* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		E9F4E0867DB7B372462B7362 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				E4DBF1264B2B9067AB39EE29 /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		0470A8287AF43C0A50E43ED4 /* Sources */ = {
@@ -336,7 +351,7 @@
 		642EF23E6298C842DBCE3823 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = "";
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = Config/DevSessions.entitlements;
 				COMBINE_HIDPI_IMAGES = YES;
 				ENABLE_APP_SANDBOX = NO;
@@ -368,7 +383,7 @@
 		B24ED5300C54E649F271EBD4 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = "";
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = Config/DevSessions.entitlements;
 				COMBINE_HIDPI_IMAGES = YES;
 				ENABLE_APP_SANDBOX = NO;
