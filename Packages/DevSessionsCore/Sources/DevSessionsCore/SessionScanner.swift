@@ -133,23 +133,10 @@ public struct SessionScanner: Sendable {
             return $0.lastActive > $1.lastActive
         }
 
-        // Keep up to 40 per agent so one busy agent cannot crowd the others out
-        // of the 200-session cache. The widget still shows the global top N.
-        let grouped = Dictionary(grouping: sorted, by: \.agent)
-        var capped: [AgentSession] = []
-        for agent in AgentKind.allCases {
-            capped.append(contentsOf: (grouped[agent] ?? []).prefix(40))
-        }
-        capped.sort {
-            if $0.lastActive == $1.lastActive {
-                return $0.cacheKey < $1.cacheKey
-            }
-            return $0.lastActive > $1.lastActive
-        }
-
+        // Flat global recency order. No per-agent quota or classification.
         return SessionScanResult(
             generatedAt: now,
-            sessions: capped,
+            sessions: Array(sorted.prefix(200)),
             diagnostics: diagnostics
         )
     }

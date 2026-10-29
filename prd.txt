@@ -177,7 +177,8 @@ A session is resumable when:
 - Default window: 7 days.
 - Selectable windows: 1, 3, 7, 14, or 30 days.
 - Activity means the last recorded interaction with the saved conversation, not whether its terminal process is running.
-- Sort by activity descending.
+- Sort by activity descending across all agents.
+- The list is flat: no per-agent sections, tabs, quotas, or fairness rules. If one agent is the only recently used agent, its sessions occupy the visible rows.
 - Closed sessions remain eligible.
 - Sessions older than the selected window are not displayed.
 - The setting is stored in shared state and applied by the widget immediately after the app reloads it.
@@ -390,7 +391,7 @@ A single JSON file in the App Group container, for example:
 
 Rules:
 - Atomic writes; owner-only permissions.
-- Maximum 200 sessions, limited to the 30-day maximum window and capped at 40 per agent so one busy agent cannot crowd out the others.
+- Maximum 200 sessions, limited to the 30-day maximum window and sorted globally by last activity. There is no per-agent quota.
 - Widget filters using `activityWindowDays`.
 - Reload the widget only when sessions, window, or diagnostics change; ignore `generatedAt` when comparing.
 - Decode failures show the widget’s empty/unavailable state; they must not crash the extension.

@@ -30,8 +30,9 @@ Phase 1 discovery is complete in `DevSessionsCore`:
 
 - Five adapters: OpenCode, Claude Code, Codex, Pi, and Oh My Pi.
 - Fixture checks cover title selection, old sessions, archived/child sessions, sidechains, nested subagent transcripts, and all five agents.
-- A real 30-day scan finds OpenCode, Claude, and Codex sessions on this machine.
+- The real scan reports OpenCode 200 (cache cap), Claude 18, and Codex 24 on this machine. The cache is the global top 200 by recency, so a heavily used OpenCode fills it.
 - Pi is installed but has no saved sessions yet. Oh My Pi is installed, but its `~/.omp` session directory has not been created by a first session yet.
+- The widget list is a flat global recency order. There are no per-agent sections, quotas, or fairness rules; a heavily used agent naturally fills the top rows.
 
 ## Requirements
 
