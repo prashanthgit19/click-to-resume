@@ -8,20 +8,21 @@
 | Type | Native desktop widget + menu bar companion app |
 | Stack | Swift, SwiftUI, WidgetKit, AppKit (URL handling and Terminal launch) |
 | Supported agents | OpenCode, Claude Code, Codex, Pi, Oh My Pi |
+| Supported terminals | Terminal.app, Ghostty |
 | Distribution | Direct download, Developer ID signed and notarized (not Mac App Store) |
-| Status | Draft v3 |
+| Status | Draft v4 |
 
 ---
 
 ## 1. Overview
 
-DevSessions is a lightweight macOS widget that shows recently active AI coding sessions from OpenCode, Claude Code, Codex CLI, Pi, and Oh My Pi, and resumes any session in Terminal with one click.
+DevSessions is a lightweight macOS widget that shows recently active AI coding sessions from OpenCode, Claude Code, Codex CLI, Pi, and Oh My Pi, and resumes any session in the user’s selected terminal with one click.
 
 It removes the need to remember session IDs, locate project directories, or type resume commands.
 
 **Core flow: Discover → Display → Click → Resume.**
 
-The widget is a read-only presentation layer. A non-sandboxed companion app performs discovery, maintains a shared cache, and launches Terminal. This split is required by macOS and is the central architectural decision of the product.
+The widget is a read-only presentation layer. A non-sandboxed companion app performs discovery, maintains a shared cache, and launches the selected terminal. This split is required by macOS and is the central architectural decision of the product.
 
 ---
 
@@ -33,7 +34,7 @@ The widget is a read-only presentation layer. A non-sandboxed companion app perf
 - Show the most recently active sessions, sorted by last activity.
 - Default to the last 7 days, with selectable windows of 1, 3, 7, 14, or 30 days.
 - Display the most recent sessions that fit the widget size.
-- Resume the exact saved conversation in Terminal in the original project directory with one click.
+- Resume the exact saved conversation in the selected terminal in the original project directory with one click.
 - Keep session data fresh in the background with minimal configuration.
 - Keep all data local. No cloud service, account, telemetry, or AI model is required.
 
@@ -41,7 +42,7 @@ The widget is a read-only presentation layer. A non-sandboxed companion app perf
 
 - Search, pinning, project grouping, or session content preview.
 - Running-process detection or “currently open” status.
-- Terminal alternatives such as iTerm or Warp.
+- Terminal alternatives beyond Terminal.app and Ghostty (iTerm, Warp) for MVP.
 - Mac App Store distribution.
 - Cloud sync, accounts, or remote sessions.
 - Auto-update.
@@ -56,7 +57,7 @@ These constraints are part of the product definition, not implementation details
 
 1. **WidgetKit cannot do the core work.**
    - A widget extension is sandboxed and cannot read `~/.claude`, `~/.codex`, `~/.pi`, `~/.omp`, or the OpenCode data directory.
-   - A widget extension cannot launch Terminal or run a process.
+   - A widget extension cannot launch a terminal or run a process.
    - The widget can read an App Group container and open the host app through a `Link`/URL scheme.
    - Therefore: the host app discovers sessions, writes a shared cache, and handles resume. The widget renders the cache and deep-links back to the host app.
 
@@ -84,14 +85,15 @@ These constraints are part of the product definition, not implementation details
 
 6. **Terminal launching must avoid unnecessary permissions.**
    - AppleScript control of Terminal triggers an Automation permission prompt.
-   - The host app writes a temporary `.command` file and opens it with Terminal.app. This requires no Automation permission.
+   - Terminal.app uses a temporary `.command` file opened through `NSWorkspace`.
+   - Ghostty (1.3.1) does not support its `+new-window` action on macOS. The verified launch path is `open -na Ghostty.app --args --command=<script>`, which starts a new Ghostty instance without Automation permission.
    - The CLI executable must be resolved to an absolute path because GUI apps do not inherit the user’s shell PATH.
 
 ---
 
 ## 4. Supported agents and data sources
 
-Source formats verified against OpenCode 2.2.1, Claude Code 2.1.296, Codex CLI 0.162.1, and Pi 1.2.0. Oh My Pi 18.14.0 is supported from its documented session format. Oh My Pi is not installed on the current development machine, so its adapter will be fixture-tested until `omp` is installed and a real session exists.
+Source formats verified against OpenCode 2.2.1, Claude Code 2.1.296, Codex CLI 0.162.1, and Pi 1.2.0. Oh My Pi 18.14.0 is installed and supported from its documented session format; it has no saved sessions yet, so its adapter remains fixture-tested until a real session exists.
 
 | Agent | Primary local source | Session fields | Activity timestamp | Resume command |
 |---|---|---|---|---|
@@ -207,12 +209,14 @@ Clicking a session:
 2. The host app validates the agent and session ID against the current cache.
 3. The host app verifies that the project directory still exists.
 4. The host app resolves the agent executable to an absolute path.
-5. The host app writes a temporary `.command` file and opens it with Terminal.app.
-6. The `.command` file changes to the project directory and executes the agent-specific resume command.
+5. The host app writes a temporary executable script and launches the user’s selected terminal:
+   - Terminal.app uses the `.command` file through `NSWorkspace`.
+   - Ghostty uses `open -na Ghostty.app --args --command=<script>`.
+6. The script changes to the project directory and executes the agent-specific resume command.
 7. The exact saved conversation opens, ready for continued work.
 8. The app triggers a refresh after launch so the session’s activity timestamp can move up.
 
-If the project directory or CLI is missing, the app shows a clear error and does not execute a partial command.
+If the project directory, CLI, or selected terminal is missing, the app shows a clear error. A missing terminal falls back to Terminal.app; a missing project/CLI never executes a partial command.
 
 ### FR-5 Background refresh — Must
 
@@ -227,16 +231,23 @@ After each successful scan it writes the shared cache and asks WidgetKit to relo
 
 Launch at login is requested by default during onboarding using the native login-item API, with a visible toggle in settings and the usual macOS approval/System Settings behavior.
 
-### FR-6 Activity window setting — Should
+### FR-6 Settings — Should
 
-A settings control offers 1, 3, 7, 14, and 30 days. Changes rewrite shared state and reload the widget. No other configuration is required.
+A settings screen offers:
+- Activity window: 1, 3, 7, 14, or 30 days.
+- Global terminal preference: Terminal.app (default) or Ghostty when installed. The choice applies to every session and is stored app-side; the widget remains terminal-agnostic.
+- A “Test Terminal” action that opens a harmless command in the selected terminal.
+- Per-agent diagnostics and last-scan status.
+
+Changes to the activity window rewrite shared state and reload the widget. No per-session terminal configuration is required.
 
 ### FR-7 Onboarding — Must
 
 On first launch, the host app explains:
 1. Which agents and how many sessions were detected.
 2. How to add the widget (macOS does not allow the app to add it programmatically).
-3. The launch-at-login toggle, with a short explanation of why it is needed for freshness.
+3. The global terminal choice. Terminal.app is the default; Ghostty appears when installed.
+4. The launch-at-login toggle, with a short explanation of why it is needed for freshness.
 
 The app must not show onboarding when it is launched by a widget resume link after setup.
 
@@ -325,7 +336,7 @@ Claude JSONL   ─┤
 Codex SQLite   ─┼─► Host app (non-sandboxed, menu bar)
 Pi JSONL       ─┤        │  scan every 5 min / wake / manual
 OMP JSONL      ─┘        │  resolve CLI paths, validate, launch
-                         ├──────────────► Terminal.app (.command)
+                         ├──────────────► Terminal.app / Ghostty
                          ▼
                 App Group shared state
                          ▼
@@ -412,7 +423,7 @@ Validation:
 ### Terminal launch
 
 - Resolve the agent executable via known install locations and a login-shell lookup. Never rely on the host app’s inherited PATH.
-- Write a `.command` file to the app’s Application Support directory with mode `0700`.
+- Write an executable script to a launch directory whose path contains no spaces (for example `~/Library/Caches/DevSessions/launch`) with mode `0700`. The script content changes to the project directory and execs the agent, so the project path may contain spaces.
 - Content pattern:
 
 ```zsh
@@ -421,7 +432,9 @@ cd -- '/absolute/project/path' || exit 1
 exec '/absolute/path/to/agent' <resume arguments>
 ```
 
-- Open the file with Terminal.app through `NSWorkspace`.
+- Terminal.app: open the `.command` script through `NSWorkspace`.
+- Ghostty: launch the verified path `open -na Ghostty.app --args --command=<script>`. Do not pass `--working-directory`; the script sets the directory. The script path must not contain spaces. This starts a new Ghostty instance and requires no Automation permission.
+- If Ghostty is selected but not installed, fall back to Terminal.app.
 - Do not use AppleScript or `osascript`; avoid the Automation permission prompt.
 - Clean up command files older than 24 hours at launch.
 - After launching, hide the host app if it was in the background and refresh the cache after a short delay.
@@ -479,7 +492,8 @@ exec '/absolute/path/to/agent' <resume arguments>
 - Target macOS 14 or later.
 - Universal binary for Apple Silicon and Intel.
 - Source formats verified against OpenCode 2.2.1, Claude Code 2.1.296, Codex CLI 0.162.1, and Pi 1.2.0.
-- Oh My Pi 18.14.0 is supported from its documented session format; runtime validation requires `omp` installed and at least one saved session.
+- Terminal.app and Ghostty 1.3.1 are supported. The Ghostty `open -na ... --command` launch path is verified locally.
+- Oh My Pi 18.14.0 is supported from its documented session format; runtime validation requires at least one saved session.
 - Unknown future schemas produce a diagnostic; they do not crash the app or hide other agents.
 
 ---
@@ -495,7 +509,8 @@ exec '/absolute/path/to/agent' <resume arguments>
 | Display sessions in a native macOS widget | Must |
 | Show correct content per widget size | Must |
 | One-click resume from the widget | Must |
-| Open Terminal in the original project directory | Must |
+| Open the selected terminal in the original project directory | Must |
+| Global terminal preference: Terminal.app (default) / Ghostty | Should |
 | Launch at login / background refresh | Must |
 | Onboarding with widget instructions | Must |
 | Per-agent diagnostics | Should |
@@ -512,14 +527,16 @@ The MVP is complete when a developer can:
 2. Add the DevSessions widget to the macOS desktop.
 3. See recent OpenCode, Claude Code, Codex, Pi, and Oh My Pi sessions automatically, sorted by activity.
 4. Switch the activity window between 1, 3, 7, 14, and 30 days and see the list update.
-5. Click any session and continue the exact conversation in Terminal in the original project directory.
+5. Click any session and continue the exact conversation in the selected terminal in the original project directory.
 6. Close a session, reopen the widget later, and still see it if it is inside the window.
 7. Resume a session, send a new message, and see it move up after the next refresh.
 8. Let a session age past the window and see it disappear at the next widget refresh (target: within 15 minutes, subject to WidgetKit scheduling).
 9. Use the product without ever seeing or typing a session ID or resume command.
 10. Break or remove one agent’s data and still see the other agents, with a diagnostics message in the app.
+11. Select Ghostty in Settings, resume a session, and see it open in Ghostty in the original project directory.
+12. Switch back to Terminal.app and confirm the same session resumes there; if Ghostty is unavailable, the app falls back to Terminal.app.
 
-Test note (October 2026 development machine): Claude and Codex activity was older than 7 days during initial validation. Pi has no saved sessions yet, and Oh My Pi is not installed. Use the 14- or 30-day window or create fresh sessions for existing agents; install `omp` and create a Pi session for end-to-end validation of the two new adapters.
+Test note (October 2026 development machine): Claude and Codex activity was older than 7 days during initial validation. Pi has no saved sessions yet, and Oh My Pi is installed but has no saved sessions. Use the 14- or 30-day window or create fresh sessions for end-to-end validation of those adapters. Ghostty 1.3.1 is installed for terminal validation.
 
 ---
 
@@ -531,10 +548,12 @@ Test note (October 2026 development machine): Claude and Codex activity was olde
 | App Group/signing setup fails | Widget cannot read cache | Phase 0 walking skeleton validates signing, App Group, widget, and deep link before feature work |
 | Widget data goes stale | “Automatic” promise fails | Menu bar agent, launch at login, 5-minute scan, reload on change, 15-minute timeline fallback |
 | GUI PATH cannot find agents | Resume fails | Resolve absolute CLI paths via known locations plus login-shell lookup |
+| Ghostty launch path behaves differently across versions | Resume fails or opens a text file | Verified `open -na ... --command` path; keep a Terminal.app fallback and a Test Terminal action |
+| Selected terminal is uninstalled | Resume fails | Fall back to Terminal.app and show a diagnostic |
 | Session/project injection or shell quoting bug | Security issue | Validate IDs against cache, restrict ID formats, quote all shell arguments, validate directories |
 | Codex `exec`/IDE sessions clutter the list | Poor signal | Include all non-archived threads for MVP; add an interactive-only filter later |
 | Pi/Oh My Pi fork formats drift | Discovery or resume breaks for the new agents | Shared Pi-family parser, header/title-slot detection, fixtures, per-agent diagnostics, and a supported-version matrix |
-| Oh My Pi not installed on the development machine | No runtime proof for OMP | Fixture-test the documented format, then install `omp`, create a session, and run the same acceptance test |
+| Oh My Pi has no saved sessions on the development machine | No live proof for OMP | Fixture-test the documented format, then create a session and run the same acceptance test |
 | Sensitive prompt text in cache | Privacy exposure | App Group-only storage, 0600 permissions, no title logging, local-only processing |
 | No Mac App Store path | Distribution limitation | Explicit direct-distribution decision; document it |
 
@@ -547,17 +566,20 @@ Test note (October 2026 development machine): Claude and Codex activity was olde
 | 0 | Platform walking skeleton | Xcode project, app + widget, App Group, signing, widget reading a test file, deep link, Terminal `.command` launch | 0.5–1 day |
 | 1 | Discovery core | `DevSessionsCore` adapters and tests; 30-day scan from all five agents; Pi-family parser shared by Pi and Oh My Pi; malformed data isolated | 3–4 days |
 | 2 | Host app | Menu bar app, scheduler, cache, settings/onboarding, login item, URL handling, resume launcher | 1.5–2 days |
+| 2.1 | Terminal preference | Global Terminal.app/Ghostty setting, Ghostty launch path, Test Terminal, fallback | 0.5–1 day |
 | 3 | Widget UI | Small/medium/large layouts, links, window filtering, empty states, accessibility | 1–1.5 days |
 | 4 | Ship | Clean-install E2E, notarization, DMG, README/privacy note, acceptance checklist | 1–1.5 days |
 
-Total: approximately 8–11 days including buffer. Phase 0 is a gate; do not build the adapters and UI first and discover signing problems last.
+Total: approximately 9–12 days including buffer. Phase 0 is a gate; do not build the adapters and UI first and discover signing problems last.
 
 ---
 
 ## 13. Future work
 
 - Search, pinning, and project grouping.
-- iTerm/Warp support and reusable Terminal windows/tabs.
+- iTerm/Warp support.
+- Ghostty instance reuse via AppleScript (with a one-time Automation approval) instead of a new instance.
+- Reusable terminal windows/tabs.
 - Widget configuration via App Intents for the activity window.
 - Interactive-only Codex filter.
 - Legacy OpenCode JSON storage and zstd-only Codex fallback.
@@ -580,3 +602,4 @@ Total: approximately 8–11 days including buffer. Phase 0 is a gate; do not bui
 - Added security, privacy, diagnostics, acceptance, and scope details.
 - Expanded support from three agents to five: OpenCode, Claude Code, Codex, Pi, and Oh My Pi.
 - Added the shared Pi-family parser for Pi and Oh My Pi JSONL sessions, including OMP’s title slot.
+- Added a global Terminal.app/Ghostty preference. Ghostty uses the verified `open -na ... --command` path and falls back to Terminal.app.

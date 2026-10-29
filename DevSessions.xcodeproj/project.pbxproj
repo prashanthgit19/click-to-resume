@@ -13,6 +13,7 @@
 		25A20F8EFCB7E99B38535B8A /* DevSessionsWidgetView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E42F55A3388C0096186A23BF /* DevSessionsWidgetView.swift */; };
 		2E68EBB0668CF2822ACDE70D /* DevSessionsWidget.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 64D11289525CE80847B26A7C /* DevSessionsWidget.appex */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		32289E53C01DF8BEC4C641B1 /* Phase0Controller.swift in Sources */ = {isa = PBXBuildFile; fileRef = 312389CC8655D0FA0E050C99 /* Phase0Controller.swift */; };
+		3FA454CDF0F3468F0D0C878C /* TerminalPreferences.swift in Sources */ = {isa = PBXBuildFile; fileRef = 538F5624C78AD2E0D56E9C3E /* TerminalPreferences.swift */; };
 		48BBD51AFFBA4EC75BAE013C /* DevSessionsWidgetBundle.swift in Sources */ = {isa = PBXBuildFile; fileRef = C19A12CCDFFC4DC30EB4991E /* DevSessionsWidgetBundle.swift */; };
 		71B74DF3DE9AC08E73065298 /* DevSessionsCore in Frameworks */ = {isa = PBXBuildFile; productRef = E63C9ED941BDE8D4BDEE23B6 /* DevSessionsCore */; };
 		7CE429C1E1953FC0CAB2D396 /* TerminalLauncher.swift in Sources */ = {isa = PBXBuildFile; fileRef = 397EAC1ACACC75B07364657E /* TerminalLauncher.swift */; };
@@ -55,6 +56,7 @@
 		312389CC8655D0FA0E050C99 /* Phase0Controller.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Phase0Controller.swift; sourceTree = "<group>"; };
 		344A400BA60D14AF6C862F55 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		397EAC1ACACC75B07364657E /* TerminalLauncher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TerminalLauncher.swift; sourceTree = "<group>"; };
+		538F5624C78AD2E0D56E9C3E /* TerminalPreferences.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TerminalPreferences.swift; sourceTree = "<group>"; };
 		64D11289525CE80847B26A7C /* DevSessionsWidget.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = DevSessionsWidget.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		958833A2FAF5C3AE8BC77217 /* DevSessionsApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DevSessionsApp.swift; sourceTree = "<group>"; };
 		AA83EED087223F52349CC956 /* DevSessionsWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DevSessionsWidget.swift; sourceTree = "<group>"; };
@@ -124,6 +126,7 @@
 				C921711CBE281BC785894089 /* Phase0View.swift */,
 				344A400BA60D14AF6C862F55 /* SettingsView.swift */,
 				397EAC1ACACC75B07364657E /* TerminalLauncher.swift */,
+				538F5624C78AD2E0D56E9C3E /* TerminalPreferences.swift */,
 			);
 			path = DevSessions;
 			sourceTree = "<group>";
@@ -244,6 +247,7 @@
 				D41E131CE98CDB7659AA4DBE /* Phase0View.swift in Sources */,
 				966B95759F8BA23703B41FCB /* SettingsView.swift in Sources */,
 				7CE429C1E1953FC0CAB2D396 /* TerminalLauncher.swift in Sources */,
+				3FA454CDF0F3468F0D0C878C /* TerminalPreferences.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

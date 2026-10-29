@@ -48,9 +48,25 @@ final class LoginItemModel: ObservableObject {
     }
 }
 
+@MainActor
+final class TerminalModel: ObservableObject {
+    let available = TerminalPreferences.installed
+    @Published var selected: TerminalKind
+
+    init() {
+        selected = TerminalPreferences.effective
+    }
+
+    func set(_ kind: TerminalKind) {
+        TerminalPreferences.selected = kind
+        selected = kind
+    }
+}
+
 struct SettingsView: View {
     @ObservedObject private var app = Phase0Controller.shared
     @ObservedObject private var loginItem = LoginItemModel()
+    @ObservedObject private var terminal = TerminalModel()
 
     private var launchAtLoginBinding: Binding<Bool> {
         Binding(
@@ -76,6 +92,35 @@ struct SettingsView: View {
                     }
                 }
                 Text("The widget is a flat list ordered globally by last activity. There are no per-agent sections or quotas.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+
+            Section("Terminal") {
+                Picker(
+                    "Open sessions in",
+                    selection: Binding(
+                        get: { terminal.selected },
+                        set: { terminal.set($0) }
+                    )
+                ) {
+                    ForEach(terminal.available) { kind in
+                        Text(kind.displayName)
+                            .tag(kind)
+                    }
+                }
+
+                if terminal.selected == .ghostty {
+                    Text("Ghostty opens a new Ghostty instance for each resume.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+
+                Button("Test Terminal") {
+                    app.testTerminal()
+                }
+
+                Text("Applies to every session. The widget always deep-links back to DevSessions first.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }

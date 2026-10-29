@@ -105,17 +105,40 @@ final class Phase0Controller: ObservableObject {
             for: session,
             executablePath: executable.path
         )
+        let terminal = TerminalPreferences.effective
 
         Task {
             do {
-                try await TerminalLauncher.open(script: script)
-                statusMessage = "Opened \(session.projectName) in Terminal."
+                try await TerminalLauncher.open(script: script, terminal: terminal)
+                statusMessage = "Opened \(session.projectName) in \(terminal.displayName)."
                 errorMessage = nil
-                writeDebugStatus("RESUME \(session.agent.rawValue) \(session.id)")
+                writeDebugStatus(
+                    "RESUME \(session.agent.rawValue) \(session.id) terminal=\(terminal.rawValue)"
+                )
                 if hideAfterLaunch {
                     NSApp.hide(nil)
                 }
                 scheduleRescanAfterResume()
+            } catch {
+                presentError(error.localizedDescription)
+            }
+        }
+    }
+
+    func testTerminal() {
+        let terminal = TerminalPreferences.effective
+        let script = """
+        #!/bin/zsh -l
+        printf '%s\\n' 'DevSessions terminal test'
+        printf 'Directory: %s\\n' "$(pwd)"
+        sleep 2
+        """
+
+        Task {
+            do {
+                try await TerminalLauncher.open(script: script, terminal: terminal)
+                statusMessage = "Terminal test opened in \(terminal.displayName)."
+                errorMessage = nil
             } catch {
                 presentError(error.localizedDescription)
             }

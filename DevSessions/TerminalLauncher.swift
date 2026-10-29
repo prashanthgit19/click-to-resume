@@ -2,30 +2,49 @@ import AppKit
 import Foundation
 
 enum TerminalLauncherError: LocalizedError {
-    case terminalNotFound
+    case terminalNotFound(TerminalKind)
+    case launchDirectoryUnavailable
     case launchFailed(String)
 
     var errorDescription: String? {
         switch self {
-        case .terminalNotFound:
-            return "Terminal.app could not be found."
+        case let .terminalNotFound(terminal):
+            return "\(terminal.displayName) could not be found."
+        case .launchDirectoryUnavailable:
+            return "The terminal launch directory is unavailable."
         case let .launchFailed(message):
-            return "Terminal could not launch the hand-off script: \(message)"
+            return "The terminal could not launch the hand-off script: \(message)"
         }
     }
 }
 
 @MainActor
 enum TerminalLauncher {
-    static func open(script: String) async throws {
+    static func open(script: String, terminal: TerminalKind) async throws {
+        let scriptURL = try writeScript(script)
+
+        guard let applicationURL = terminal.applicationURL else {
+            throw TerminalLauncherError.terminalNotFound(terminal)
+        }
+
+        switch terminal {
+        case .terminal:
+            try await openWithWorkspace(scriptURL, applicationURL)
+        case .ghostty:
+            try launchGhostty(scriptURL, applicationURL)
+        }
+    }
+
+    private static func writeScript(_ script: String) throws -> URL {
         let fileManager = FileManager.default
-        let support = try fileManager.url(
-            for: .applicationSupportDirectory,
-            in: .userDomainMask,
-            appropriateFor: nil,
-            create: true
-        )
-        let launchDirectory = support
+        guard let caches = fileManager.urls(
+            for: .cachesDirectory,
+            in: .userDomainMask
+        ).first else {
+            throw TerminalLauncherError.launchDirectoryUnavailable
+        }
+
+        let launchDirectory = caches
             .appendingPathComponent("DevSessions", isDirectory: true)
             .appendingPathComponent("launch", isDirectory: true)
 
@@ -38,27 +57,43 @@ enum TerminalLauncher {
             ofItemAtPath: launchDirectory.path
         )
 
+        if let existing = try? fileManager.contentsOfDirectory(
+            at: launchDirectory,
+            includingPropertiesForKeys: [.contentModificationDateKey],
+            options: [.skipsHiddenFiles]
+        ) {
+            let cutoff = Date().addingTimeInterval(-86_400)
+            for file in existing {
+                let modified = try? file.resourceValues(
+                    forKeys: [.contentModificationDateKey]
+                ).contentModificationDate
+                if let modified, modified < cutoff {
+                    try? fileManager.removeItem(at: file)
+                }
+            }
+        }
+
         let fileURL = launchDirectory
-            .appendingPathComponent("phase0-\(UUID().uuidString).command")
+            .appendingPathComponent("resume-\(UUID().uuidString).command")
         try Data(script.utf8).write(to: fileURL, options: .atomic)
         try fileManager.setAttributes(
             [.posixPermissions: 0o700],
             ofItemAtPath: fileURL.path
         )
+        return fileURL
+    }
 
-        guard let terminalURL = NSWorkspace.shared.urlForApplication(
-            withBundleIdentifier: "com.apple.Terminal"
-        ) else {
-            throw TerminalLauncherError.terminalNotFound
-        }
-
+    private static func openWithWorkspace(
+        _ scriptURL: URL,
+        _ applicationURL: URL
+    ) async throws {
         let configuration = NSWorkspace.OpenConfiguration()
         configuration.activates = true
 
         try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
             NSWorkspace.shared.open(
-                [fileURL],
-                withApplicationAt: terminalURL,
+                [scriptURL],
+                withApplicationAt: applicationURL,
                 configuration: configuration
             ) { _, error in
                 if let error {
@@ -69,6 +104,37 @@ enum TerminalLauncher {
                     continuation.resume()
                 }
             }
+        }
+    }
+
+    private static func launchGhostty(_ scriptURL: URL, _ applicationURL: URL) throws {
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: "/usr/bin/open")
+        process.arguments = [
+            "-na",
+            applicationURL.path,
+            "--args",
+            "--command=\(scriptURL.path)"
+        ]
+
+        let errorPipe = Pipe()
+        process.standardError = errorPipe
+
+        do {
+            try process.run()
+        } catch {
+            throw TerminalLauncherError.launchFailed(error.localizedDescription)
+        }
+
+        process.waitUntilExit()
+
+        guard process.terminationStatus == 0 else {
+            let errorData = errorPipe.fileHandleForReading.readDataToEndOfFile()
+            let message = String(decoding: errorData, as: UTF8.self)
+                .trimmingCharacters(in: .whitespacesAndNewlines)
+            throw TerminalLauncherError.launchFailed(
+                message.isEmpty ? "open exited with status \(process.terminationStatus)" : message
+            )
         }
     }
 }
