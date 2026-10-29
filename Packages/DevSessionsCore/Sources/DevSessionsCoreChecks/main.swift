@@ -61,6 +61,16 @@ func runChecks() throws {
         DeepLink.parse(URL(string: "https://example.com")!) == nil,
         "foreign URL is rejected"
     )
+    let piResumeURL = DeepLink.resumeURL(agent: .pi, sessionID: claudeID)
+    expect(
+        DeepLink.parse(piResumeURL) == .resume(agent: .pi, sessionID: claudeID),
+        "Pi resume deep link round trips"
+    )
+    let ompResumeURL = DeepLink.resumeURL(agent: .omp, sessionID: claudeID)
+    expect(
+        DeepLink.parse(ompResumeURL) == .resume(agent: .omp, sessionID: claudeID),
+        "Oh My Pi resume deep link round trips"
+    )
 
     // Session ID formats.
     expect(SessionIDValidator.isValid("ses_abc123", for: .opencode), "valid OpenCode id accepted")
@@ -68,6 +78,9 @@ func runChecks() throws {
     expect(!SessionIDValidator.isValid("ses_abc-123", for: .opencode), "malformed OpenCode id rejected")
     expect(SessionIDValidator.isValid(claudeID, for: .codex), "UUID accepted for Codex")
     expect(!SessionIDValidator.isValid("not-a-uuid", for: .claude), "invalid Claude id rejected")
+    expect(SessionIDValidator.isValid(claudeID, for: .pi), "Pi accepts a safe session id")
+    expect(SessionIDValidator.isValid(claudeID, for: .omp), "Oh My Pi accepts a safe session id")
+    expect(!SessionIDValidator.isValid("-bad", for: .pi), "unsafe Pi id rejected")
 
     // Resume commands.
     expect(
@@ -85,6 +98,16 @@ func runChecks() throws {
         ResumeCommand.arguments(for: .codex, sessionID: codexID)
             == ["resume", codexID],
         "Codex resume arguments"
+    )
+    expect(
+        ResumeCommand.arguments(for: .pi, sessionID: codexID)
+            == ["--session", codexID],
+        "Pi resume arguments"
+    )
+    expect(
+        ResumeCommand.arguments(for: .omp, sessionID: codexID)
+            == ["--resume", codexID],
+        "Oh My Pi resume arguments"
     )
 
     // Shell quoting and the Phase 0 hand-off script.
@@ -108,6 +131,7 @@ func runChecks() throws {
 
 do {
     try runChecks()
+    try runScannerChecks()
     if failures > 0 {
         fputs("\(failures) check(s) failed.\n", stderr)
         exit(1)

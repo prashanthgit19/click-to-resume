@@ -57,6 +57,11 @@ public enum SessionIDValidator {
             ) != nil
         case .claude, .codex:
             return UUID(uuidString: id) != nil
+        case .pi, .omp:
+            return id.range(
+                of: #"^[A-Za-z0-9](?:[A-Za-z0-9._-]*[A-Za-z0-9])?$"#,
+                options: .regularExpression
+            ) != nil
         }
     }
 }

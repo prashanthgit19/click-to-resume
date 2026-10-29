@@ -8,9 +8,16 @@ let package = Package(
         .library(name: "DevSessionsCore", targets: ["DevSessionsCore"])
     ],
     targets: [
-        .target(name: "DevSessionsCore"),
+        .target(
+            name: "DevSessionsCore",
+            linkerSettings: [.linkedLibrary("sqlite3")]
+        ),
         .executableTarget(
             name: "DevSessionsCoreChecks",
+            dependencies: ["DevSessionsCore"]
+        ),
+        .executableTarget(
+            name: "DevSessionsScan",
             dependencies: ["DevSessionsCore"]
         )
     ]

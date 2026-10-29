@@ -9,6 +9,10 @@ public enum ResumeCommand {
             return ["--resume", sessionID]
         case .codex:
             return ["resume", sessionID]
+        case .pi:
+            return ["--session", sessionID]
+        case .omp:
+            return ["--resume", sessionID]
         }
     }
 }

@@ -2,7 +2,7 @@
 
 DevSessions is a macOS widget plus menu bar companion app that shows recently active OpenCode, Claude Code, Codex, Pi, and Oh My Pi sessions and resumes them in Terminal.
 
-This repository is currently at **Phase 0: the platform walking skeleton**. It writes three demo sessions to a shared App Group cache, renders them in a widget, and proves that a widget click can hand off to Terminal. Real session discovery starts in Phase 1.
+Phase 0 is complete: the app, widget, App Group, deep link, and Terminal hand-off all run. Phase 1 adds the five-agent discovery core. The host app still uses the three-session demo cache until Phase 2 wires the scanner into the app.
 
 See `prd.txt` for the full product requirements.
 
@@ -25,6 +25,13 @@ Phase 0 is complete and runtime-validated on this Mac:
 - `make verify` passes: core checks, plist lint, and host/widget type checks.
 
 The local build uses a free Apple Development certificate and the team-prefixed macOS App Group convention. Public distribution still requires the paid Apple Developer Program for Developer ID signing and notarization. Public users do not need Xcode, an Apple ID, or a developer account.
+
+Phase 1 discovery is complete in `DevSessionsCore`:
+
+- Five adapters: OpenCode, Claude Code, Codex, Pi, and Oh My Pi.
+- Fixture checks cover title selection, old sessions, archived/child sessions, sidechains, nested subagent transcripts, and all five agents.
+- A real 30-day scan finds OpenCode, Claude, and Codex sessions on this machine.
+- Pi is installed but has no saved sessions yet. Oh My Pi is installed, but its `~/.omp` session directory has not been created by a first session yet.
 
 ## Requirements
 
@@ -81,6 +88,12 @@ make verify     # core checks + plist lint + host/widget type checks
 make project    # regenerate DevSessions.xcodeproj from project.yml
 ```
 
+Run the discovery scanner against the real home directory:
+
+```sh
+swift run --package-path Packages/DevSessionsCore DevSessionsScan --days 30
+```
+
 The shared-core checks cover state round-tripping, activity filtering, cache permissions, deep-link validation, session-ID validation, resume arguments, and shell quoting.
 
 Full signed app/widget build:
@@ -115,12 +128,12 @@ prd.txt                   Product requirements
 
 ## Next phase
 
-Phase 1 implements the five real adapters in `DevSessionsCore`:
+Phase 2 wires the discovery core into the host app:
 
-- OpenCode: `session_v2` in the SQLite database.
-- Claude Code: JSONL session files under `~/.claude/projects`.
-- Codex: `threads` in `~/.codex/state_*.sqlite`.
-- Pi: JSONL sessions under `~/.pi/agent/sessions`.
-- Oh My Pi: JSONL sessions under `~/.omp/agent/sessions`; shares the Pi-family parser and handles OMP’s title slot.
+- Replace the Phase 0 demo writer with `SessionScanner`.
+- Persist the real five-agent scan to the App Group cache.
+- Show real sessions in the widget.
+- Resolve absolute CLI paths for OpenCode, Claude, Codex, Pi, and Oh My Pi.
+- Replace the demo Terminal script with real resume commands and post-resume rescanning.
 
-Pi is installed on this machine but has no saved sessions yet. Oh My Pi (`omp`) is not installed, so its adapter will be fixture-tested until it is available for a real end-to-end run. Each adapter gets schema detection, failure isolation, and validation against real local data before the widget is wired to it.
+Pi and Oh My Pi need one real session each for final end-to-end validation. The adapters are already fixture-tested.

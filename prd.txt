@@ -390,7 +390,7 @@ A single JSON file in the App Group container, for example:
 
 Rules:
 - Atomic writes; owner-only permissions.
-- Maximum 200 sessions, limited to the 30-day maximum window.
+- Maximum 200 sessions, limited to the 30-day maximum window and capped at 40 per agent so one busy agent cannot crowd out the others.
 - Widget filters using `activityWindowDays`.
 - Reload the widget only when sessions, window, or diagnostics change; ignore `generatedAt` when comparing.
 - Decode failures show the widget’s empty/unavailable state; they must not crash the extension.

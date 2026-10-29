@@ -4,6 +4,8 @@ public enum AgentKind: String, Codable, CaseIterable, Sendable {
     case opencode
     case claude
     case codex
+    case pi
+    case omp
 
     public var displayName: String {
         switch self {
@@ -13,6 +15,10 @@ public enum AgentKind: String, Codable, CaseIterable, Sendable {
             return "Claude"
         case .codex:
             return "Codex"
+        case .pi:
+            return "Pi"
+        case .omp:
+            return "Oh My Pi"
         }
     }
 }
@@ -47,7 +53,7 @@ public struct AgentSession: Codable, Hashable, Sendable {
     }
 }
 
-public enum DiagnosticStatus: String, Codable, Sendable {
+public enum DiagnosticStatus: String, Codable, Equatable, Sendable {
     case ok
     case unsupported
     case notInstalled
@@ -141,7 +147,7 @@ public enum DemoData {
             )
         ]
 
-        let diagnostics = AgentKind.allCases.map {
+        let diagnostics = [AgentKind.opencode, .claude, .codex].map {
             AgentDiagnostic(agent: $0, status: .ok, sessionCount: 1)
         }
 
