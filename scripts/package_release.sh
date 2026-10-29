@@ -14,7 +14,15 @@ rm -rf "$DIST"
 mkdir -p "$DIST"
 
 SIGN_ARGS=()
-if [[ -n "${DEVELOPER_ID_APPLICATION:-}" ]]; then
+if [[ "${DEVELOPER_ID_APPLICATION:-}" == "-" ]]; then
+  # Ad-hoc signing for public releases without a paid Apple Developer Program.
+  SIGN_ARGS+=(
+    "CODE_SIGN_IDENTITY=-"
+    "CODE_SIGN_STYLE=Manual"
+    "DEVELOPMENT_TEAM="
+    "PROVISIONING_PROFILE_SPECIFIER="
+  )
+elif [[ -n "${DEVELOPER_ID_APPLICATION:-}" ]]; then
   SIGN_ARGS+=("CODE_SIGN_IDENTITY=$DEVELOPER_ID_APPLICATION")
 fi
 
@@ -24,6 +32,7 @@ xcodebuild \
   -configuration Release \
   -derivedDataPath "$DERIVED" \
   -allowProvisioningUpdates \
+  "CODE_SIGN_INJECT_BASE_ENTITLEMENTS=NO" \
   "${SIGN_ARGS[@]}" \
   build
 
@@ -38,7 +47,7 @@ hdiutil create \
   -format UDZO \
   "$DMG"
 
-if [[ -n "${DEVELOPER_ID_APPLICATION:-}" && -n "${APPLE_ID:-}" && -n "${APPLE_TEAM_ID:-}" && -n "${APPLE_APP_PASSWORD:-}" ]]; then
+if [[ -n "${DEVELOPER_ID_APPLICATION:-}" && "${DEVELOPER_ID_APPLICATION}" != "-" && -n "${APPLE_ID:-}" && -n "${APPLE_TEAM_ID:-}" && -n "${APPLE_APP_PASSWORD:-}" ]]; then
   xcrun notarytool submit "$DMG" \
     --apple-id "$APPLE_ID" \
     --team-id "$APPLE_TEAM_ID" \
@@ -47,4 +56,10 @@ if [[ -n "${DEVELOPER_ID_APPLICATION:-}" && -n "${APPLE_ID:-}" && -n "${APPLE_TE
   xcrun stapler staple "$DMG"
 fi
 
+(
+  cd "$DIST"
+  shasum -a 256 "$(basename "$DMG")" > SHA256SUMS
+)
+
 echo "Built $DMG"
+echo "Wrote $DIST/SHA256SUMS"
