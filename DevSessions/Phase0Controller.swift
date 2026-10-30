@@ -15,6 +15,7 @@ final class Phase0Controller: ObservableObject {
 
     private var store: SharedStore?
     private var didBootstrap = false
+    private var hasAppliedInitialScan = false
     private var scanTimer: Timer?
     private var wakeObserver: NSObjectProtocol?
 
@@ -193,9 +194,10 @@ final class Phase0Controller: ObservableObject {
         statusMessage = "\(newState.sessions.count) sessions · \(Self.timeFormatter.string(from: result.generatedAt))"
         writeDebugStatus("SCAN \(newState.sessions.count) sessions")
 
-        if changed {
+        if changed || !hasAppliedInitialScan {
             WidgetCenter.shared.reloadAllTimelines()
         }
+        hasAppliedInitialScan = true
     }
 
     private func startScheduler() {

@@ -82,18 +82,24 @@ struct DevSessionsWidgetView: View {
                             lineWidth: 3
                         )
 
-                        Text(session.title)
-                            .font(.system(size: 14, weight: .semibold))
-                            .foregroundStyle(Theme.primary)
-                            .lineLimit(2)
-                            .minimumScaleFactor(0.9)
+                        HStack(alignment: .center, spacing: 6) {
+                            Text(session.projectName)
+                                .font(.system(size: 15, weight: .semibold))
+                                .foregroundStyle(Theme.primary)
+                                .lineLimit(1)
+                                .minimumScaleFactor(0.9)
+
+                            Spacer(minLength: 4)
+
+                            RedirectArrow(size: 22)
+                        }
 
                         HStack(spacing: 4) {
                             Text(session.agent.displayName)
                                 .foregroundStyle(session.agent.accent)
                             Text("·")
                                 .foregroundStyle(Theme.tertiary)
-                            Text(session.projectName)
+                            Text(session.title)
                                 .foregroundStyle(Theme.secondary)
                         }
                         .font(.system(size: 10.5, weight: .medium))
@@ -327,7 +333,7 @@ private struct SessionRow: View {
                 )
 
                 VStack(alignment: .leading, spacing: 1.5) {
-                    Text(session.title)
+                    Text(session.projectName)
                         .font(.system(size: titleSize, weight: .semibold))
                         .foregroundStyle(Theme.primary)
                         .lineLimit(1)
@@ -337,7 +343,7 @@ private struct SessionRow: View {
                             .foregroundStyle(session.agent.accent)
                         Text("·")
                             .foregroundStyle(Theme.tertiary)
-                        Text(session.projectName)
+                        Text(session.title)
                             .foregroundStyle(Theme.secondary)
                     }
                     .font(.system(size: subtitleSize, weight: .medium))
@@ -346,12 +352,15 @@ private struct SessionRow: View {
 
                 Spacer(minLength: 3)
 
-                Text(session.lastActive, style: .relative)
-                    .font(.system(size: timeSize, weight: .medium))
-                    .foregroundStyle(Theme.secondary)
-                    .lineLimit(2)
-                    .multilineTextAlignment(.trailing)
-                    .frame(minWidth: 26, alignment: .trailing)
+                HStack(spacing: 6) {
+                    Text(session.lastActive, style: .relative)
+                        .font(.system(size: timeSize, weight: .medium))
+                        .foregroundStyle(Theme.secondary)
+                        .lineLimit(1)
+                        .multilineTextAlignment(.trailing)
+
+                    RedirectArrow(size: ringSize > 28 ? 20 : 18)
+                }
             }
             .padding(.vertical, ringSize > 30 ? 7 : 5)
             .contentShape(Rectangle())
@@ -451,6 +460,22 @@ private struct BrandMark: View {
         }
         .frame(width: size, height: size)
         .accessibilityHidden(true)
+    }
+}
+
+// MARK: - Redirect arrow
+
+private struct RedirectArrow: View {
+    let size: CGFloat
+
+    var body: some View {
+        Image(systemName: "arrow.up.right")
+            .font(.system(size: size * 0.42, weight: .bold))
+            .foregroundStyle(Theme.primary.opacity(0.92))
+            .frame(width: size, height: size)
+            .background(Circle().fill(Color.white.opacity(0.09)))
+            .overlay(Circle().stroke(Theme.separator, lineWidth: 0.5))
+            .accessibilityHidden(true)
     }
 }
 
