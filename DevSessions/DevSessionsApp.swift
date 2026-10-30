@@ -21,6 +21,7 @@ struct DevSessionsApp: App {
         Settings {
             SettingsView()
         }
+        .windowResizability(.contentSize)
     }
 }
 
