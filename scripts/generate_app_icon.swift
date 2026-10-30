@@ -24,6 +24,15 @@ let sizes: [(name: String, pixels: Int)] = [
     ("icon_512x512@2x.png", 1024)
 ]
 
+func color(_ hex: UInt32, alpha: CGFloat = 1) -> NSColor {
+    NSColor(
+        srgbRed: CGFloat((hex >> 16) & 0xFF) / 255,
+        green: CGFloat((hex >> 8) & 0xFF) / 255,
+        blue: CGFloat(hex & 0xFF) / 255,
+        alpha: alpha
+    )
+}
+
 func drawIcon(pixels: Int) throws -> Data {
     guard let bitmap = NSBitmapImageRep(
         bitmapDataPlanes: nil,
@@ -43,36 +52,120 @@ func drawIcon(pixels: Int) throws -> Data {
     bitmap.size = NSSize(width: pixels, height: pixels)
     NSGraphicsContext.saveGraphicsState()
     defer { NSGraphicsContext.restoreGraphicsState() }
-    NSGraphicsContext.current = NSGraphicsContext(bitmapImageRep: bitmap)
 
-    let bounds = NSRect(x: 0, y: 0, width: pixels, height: pixels)
-    let start = NSColor(srgbRed: 0.11, green: 0.16, blue: 0.21, alpha: 1)
-    let end = NSColor(srgbRed: 0.035, green: 0.055, blue: 0.075, alpha: 1)
-    NSGradient(starting: start, ending: end)?.draw(in: bounds, angle: -90)
+    guard let graphics = NSGraphicsContext(bitmapImageRep: bitmap) else {
+        throw NSError(domain: "DevSessionsIcon", code: 2)
+    }
+    NSGraphicsContext.current = graphics
 
-    let scale = CGFloat(pixels)
-    let lineWidth = max(scale * 0.075, 1.15)
+    let cg = graphics.cgContext
+    let size = CGFloat(pixels)
+    let colorSpace = CGColorSpace(name: CGColorSpace.sRGB)
+        ?? CGColorSpaceCreateDeviceRGB()
 
-    let chevron = NSBezierPath()
-    chevron.lineWidth = lineWidth
-    chevron.lineCapStyle = .round
-    chevron.lineJoinStyle = .round
-    chevron.move(to: NSPoint(x: scale * 0.27, y: scale * 0.62))
-    chevron.line(to: NSPoint(x: scale * 0.44, y: scale * 0.50))
-    chevron.line(to: NSPoint(x: scale * 0.27, y: scale * 0.38))
-    NSColor(srgbRed: 0.94, green: 0.96, blue: 0.97, alpha: 1).setStroke()
-    chevron.stroke()
+    // Deep plum background.
+    let background = CGGradient(
+        colorsSpace: colorSpace,
+        colors: [
+            color(0x1A1028).cgColor,
+            color(0x2B1742).cgColor
+        ] as CFArray,
+        locations: [0, 1]
+    )!
+    cg.drawLinearGradient(
+        background,
+        start: CGPoint(x: 0, y: size),
+        end: CGPoint(x: size, y: 0),
+        options: []
+    )
 
-    let underscore = NSBezierPath()
-    underscore.lineWidth = lineWidth
-    underscore.lineCapStyle = .round
-    underscore.move(to: NSPoint(x: scale * 0.53, y: scale * 0.38))
-    underscore.line(to: NSPoint(x: scale * 0.73, y: scale * 0.38))
-    NSColor(srgbRed: 0.34, green: 0.88, blue: 0.78, alpha: 1).setStroke()
-    underscore.stroke()
+    // Soft light behind the ring.
+    let glowCenter = CGPoint(x: size * 0.72, y: size * 0.78)
+    let glow = CGGradient(
+        colorsSpace: colorSpace,
+        colors: [
+            color(0x8B5CF6, alpha: 0.30).cgColor,
+            color(0x8B5CF6, alpha: 0).cgColor
+        ] as CFArray,
+        locations: [0, 1]
+    )!
+    cg.drawRadialGradient(
+        glow,
+        startCenter: glowCenter,
+        startRadius: 0,
+        endCenter: glowCenter,
+        endRadius: size * 0.55,
+        options: []
+    )
+
+    let center = CGPoint(x: size / 2, y: size / 2)
+    let radius = size * 0.325
+    let lineWidth = size * 0.095
+    let degrees: CGFloat = .pi / 180
+
+    // Ring with a 50-degree gap at the top-right.
+    let ring = CGMutablePath()
+    ring.addArc(
+        center: center,
+        radius: radius,
+        startAngle: 70 * degrees,
+        endAngle: 380 * degrees,
+        clockwise: false
+    )
+    let ringOutline = ring.copy(
+        strokingWithWidth: lineWidth,
+        lineCap: .round,
+        lineJoin: .round,
+        miterLimit: 10
+    )
+
+    cg.saveGState()
+    cg.addPath(ringOutline)
+    cg.clip()
+
+    let ringGradient = CGGradient(
+        colorsSpace: colorSpace,
+        colors: [
+            color(0x8B7CF6).cgColor,
+            color(0xF3A6C8).cgColor
+        ] as CFArray,
+        locations: [0, 1]
+    )!
+    cg.drawLinearGradient(
+        ringGradient,
+        start: CGPoint(x: center.x - radius, y: center.y - radius),
+        end: CGPoint(x: center.x + radius, y: center.y + radius),
+        options: []
+    )
+    cg.restoreGState()
+
+    // The active-session dot sits in the gap.
+    let dotAngle = 45 * degrees
+    let dotCenter = CGPoint(
+        x: center.x + radius * cos(dotAngle),
+        y: center.y + radius * sin(dotAngle)
+    )
+    let dotRadius = lineWidth * 0.58
+
+    cg.saveGState()
+    cg.setShadow(
+        offset: .zero,
+        blur: size * 0.035,
+        color: color(0xFFC29B, alpha: 0.65).cgColor
+    )
+    cg.setFillColor(color(0xFFC29B).cgColor)
+    cg.fillEllipse(
+        in: CGRect(
+            x: dotCenter.x - dotRadius,
+            y: dotCenter.y - dotRadius,
+            width: dotRadius * 2,
+            height: dotRadius * 2
+        )
+    )
+    cg.restoreGState()
 
     guard let data = bitmap.representation(using: .png, properties: [:]) else {
-        throw NSError(domain: "DevSessionsIcon", code: 2)
+        throw NSError(domain: "DevSessionsIcon", code: 3)
     }
     return data
 }
