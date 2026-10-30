@@ -77,6 +77,12 @@ public struct AgentDiagnostic: Codable, Hashable, Sendable {
         self.sessionCount = sessionCount
         self.message = message
     }
+
+    /// Whether this agent produced sessions or needs attention. Missing agents
+    /// and installed agents with no sessions stay out of the diagnostics list.
+    public var isDetected: Bool {
+        sessionCount > 0 || status == .error || status == .unsupported
+    }
 }
 
 public struct SharedState: Codable, Sendable {

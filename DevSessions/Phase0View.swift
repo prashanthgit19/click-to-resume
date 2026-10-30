@@ -9,6 +9,10 @@ struct Phase0View: View {
         controller.state?.sessions(withinDays: controller.activityWindowDays) ?? []
     }
 
+    private var detectedDiagnostics: [AgentDiagnostic] {
+        controller.state?.diagnostics.filter(\.isDetected) ?? []
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
             header
@@ -50,8 +54,14 @@ struct Phase0View: View {
 
             GroupBox("Agent diagnostics") {
                 VStack(alignment: .leading, spacing: 6) {
-                    if let diagnostics = controller.state?.diagnostics {
-                        ForEach(diagnostics, id: \.agent) { diagnostic in
+                    if controller.state == nil {
+                        Text("No scan yet.")
+                            .foregroundStyle(.secondary)
+                    } else if detectedDiagnostics.isEmpty {
+                        Text("No agents detected.")
+                            .foregroundStyle(.secondary)
+                    } else {
+                        ForEach(detectedDiagnostics, id: \.agent) { diagnostic in
                             HStack(spacing: 12) {
                                 Text(diagnostic.agent.displayName)
                                     .frame(width: 110, alignment: .leading)
@@ -71,9 +81,11 @@ struct Phase0View: View {
                                     .padding(.leading, 122)
                             }
                         }
-                    } else {
-                        Text("No scan yet.")
+
+                        Text("Only agents detected on this Mac are listed.")
+                            .font(.caption)
                             .foregroundStyle(.secondary)
+                            .padding(.top, 2)
                     }
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)

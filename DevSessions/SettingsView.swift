@@ -189,8 +189,14 @@ struct SettingsView: View {
     private var agentsPane: some View {
         Form {
             Section {
-                if let diagnostics = app.state?.diagnostics {
-                    ForEach(diagnostics, id: \.agent) { diagnostic in
+                if app.state == nil {
+                    Text("No scan yet.")
+                        .foregroundStyle(.secondary)
+                } else if detectedDiagnostics.isEmpty {
+                    Text("No agents detected.")
+                        .foregroundStyle(.secondary)
+                } else {
+                    ForEach(detectedDiagnostics, id: \.agent) { diagnostic in
                         LabeledContent {
                             HStack(spacing: 8) {
                                 Text(statusLabel(diagnostic.status))
@@ -207,14 +213,11 @@ struct SettingsView: View {
                             Text(diagnostic.agent.displayName)
                         }
                     }
-                } else {
-                    Text("No scan yet.")
-                        .foregroundStyle(.secondary)
                 }
             } header: {
                 Text("Agents")
             } footer: {
-                Text("Counts reflect the last scan.")
+                Text("Only agents detected on this Mac are listed. Counts reflect the last scan.")
             }
 
             Section {
@@ -250,6 +253,10 @@ struct SettingsView: View {
         Bundle.main.object(
             forInfoDictionaryKey: "CFBundleShortVersionString"
         ) as? String ?? "—"
+    }
+
+    private var detectedDiagnostics: [AgentDiagnostic] {
+        app.state?.diagnostics.filter(\.isDetected) ?? []
     }
 
     private func statusLabel(_ status: DiagnosticStatus) -> String {

@@ -45,6 +45,28 @@ func runChecks() throws {
     let directoryPermissions = directoryAttributes[.posixPermissions] as? NSNumber
     expect(directoryPermissions?.intValue == 0o700, "state directory is 0700")
 
+    // Diagnostics only show agents with sessions or a problem.
+    expect(
+        !AgentDiagnostic(agent: .pi, status: .ok, sessionCount: 0).isDetected,
+        "installed agent with no sessions is hidden"
+    )
+    expect(
+        !AgentDiagnostic(agent: .omp, status: .notInstalled, sessionCount: 0).isDetected,
+        "missing agent is hidden"
+    )
+    expect(
+        AgentDiagnostic(agent: .codex, status: .ok, sessionCount: 24).isDetected,
+        "agent with sessions is shown"
+    )
+    expect(
+        AgentDiagnostic(agent: .claude, status: .error, sessionCount: 0).isDetected,
+        "errored agent is shown"
+    )
+    expect(
+        AgentDiagnostic(agent: .opencode, status: .unsupported, sessionCount: 0).isDetected,
+        "unsupported agent is shown"
+    )
+
     // URL scheme round trip and validation.
     let claudeID = "11111111-1111-4111-8111-111111111111"
     let resumeURL = DeepLink.resumeURL(agent: .claude, sessionID: claudeID)
