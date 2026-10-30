@@ -14,8 +14,8 @@ lint:
 	plutil -lint Config/*.plist Config/*.entitlements
 
 verify: check lint
-	xcrun swiftc -typecheck -swift-version 5 -target $(ARCH)-apple-macos14.0 -sdk "$(SDK)" -I "$(BIN)" -parse-as-library DevSessions/*.swift
-	xcrun swiftc -typecheck -swift-version 5 -target $(ARCH)-apple-macos14.0 -sdk "$(SDK)" -I "$(BIN)" -parse-as-library -application-extension DevSessionsWidget/*.swift
+	xcrun swiftc -typecheck -swift-version 5 -target $(ARCH)-apple-macos14.0 -sdk "$(SDK)" -I "$(BIN)" -I "$(BIN)/Modules" -parse-as-library DevSessions/*.swift
+	xcrun swiftc -typecheck -swift-version 5 -target $(ARCH)-apple-macos14.0 -sdk "$(SDK)" -I "$(BIN)" -I "$(BIN)/Modules" -parse-as-library -application-extension DevSessionsWidget/*.swift
 	@echo "Core checks, plist lint, and Swift type checks passed."
 	@echo "Use Xcode or xcodebuild for the signed app/widget build."
 
