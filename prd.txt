@@ -63,7 +63,7 @@ These constraints are part of the product definition, not implementation details
 
 2. **The host app must be non-sandboxed.**
    - Automatic discovery requires reading agent data outside the app container.
-   - This rules out Mac App Store distribution. DevSessions ships as a Developer ID, notarized direct download.
+   - This rules out Mac App Store distribution. DevSessions ships as a direct download; Developer ID signing and notarization are optional and remove the first-launch approval.
    - The widget extension itself remains sandboxed.
 
 3. **There is no stable cross-project session-list API.**
@@ -448,8 +448,9 @@ exec '/absolute/path/to/agent' <resume arguments>
 
 ### Distribution and signing
 
-- Direct download DMG or zip containing `DevSessions.app` and the embedded widget extension.
-- Developer ID Application signing, hardened runtime, notarization, and stapling.
+- Direct download DMG containing `DevSessions.app` and the embedded widget extension.
+- Public builds are ad-hoc signed with hardened runtime; users approve the app once in Gatekeeper.
+- Developer ID signing, notarization, and stapling are optional upgrades for a frictionless first launch.
 - App Group entitlement shared by the host app and widget extension.
 - The host app is not sandboxed; the widget extension is sandboxed.
 - Mac App Store distribution is out of scope because the host app requires file access outside its container.
