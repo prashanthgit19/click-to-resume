@@ -6,5 +6,7 @@
 	<array>
 		<string>67Z29VG25Z.com.devsessions.shared2</string>
 	</array>
+	<key>com.apple.security.automation.apple-events</key>
+	<true/>
 </dict>
 </plist>
