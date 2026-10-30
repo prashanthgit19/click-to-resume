@@ -38,6 +38,7 @@ The app is universal (`arm64` + `x86_64`) and requires macOS 14 or later. No App
 - Real resume commands with absolute CLI paths.
 - Global terminal preference: Terminal.app (default) and Ghostty.
 - 1/3/7/14/30-day activity window, diagnostics, launch-at-login, and background refresh.
+- Widget themes: Match System, Midnight, Paper, Graphite, and Coast, with Full Color, Clear, and Tinted support.
 - App icon and Release DMG packaging.
 
 ## Current validation status
@@ -96,17 +97,18 @@ Then run `make project` again. The XcodeGen post-generation hook keeps the App G
 
 ## Current acceptance test
 
-1. Launch `/Applications/DevSessions.app`. The menu bar shows a terminal icon.
+1. Launch `/Applications/DevSessions.app`. The menu bar shows the ring-and-dot icon.
 2. Choose **Open Sessions** from the menu bar.
 3. The window should show real recent sessions, ordered globally by last activity.
-4. Change **Settings → Sessions → Show sessions from**. The widget should update to the selected window.
+4. Change **Settings → General → Show sessions from**. The widget should update to the selected window.
 5. In **Settings → Terminal**, choose **Ghostty** and click **Test Terminal**. Then switch back to Terminal and test both.
 6. Add or refresh the widget from the desktop:
    - Right-click the desktop → **Edit Widgets** → **DevSessions**.
    - If upgrading from the Phase 0 demo, remove and re-add the widget once.
 7. The widget should show the same global recent sessions. Small shows one; medium shows two; large shows up to six.
 8. Click a session row. DevSessions should launch the selected terminal in the original project directory and run the correct CLI resume command.
-9. Open **Settings** and check the per-agent diagnostics and launch-at-login status.
+9. Open **Settings → Widget**, choose each theme, and confirm the widget updates. Then test **System Settings → Appearance → Icon & widget style** with Full Color, Clear, and Tinted.
+10. Open **Settings → Agents** and check the diagnostics and launch-at-login status.
 
 If the app shows an App Group error, signing/App Group setup is not complete. If a resume fails, check the session’s project directory and the resolved CLI path; diagnostics are in the app, not the widget.
 
@@ -158,6 +160,7 @@ LICENSE                   MIT license
 - Resume validates the session against the cache, checks the project directory, resolves the CLI to an absolute path, writes an executable script, and opens it in the globally selected terminal.
 - **Terminal.app** is the default. **Ghostty** is available when installed and opens a new window in the running instance; macOS asks once for Automation approval.
 - The terminal choice is global for all sessions, stored app-side; the widget always deep-links back to DevSessions first.
+- The widget theme is global, stored in the App Group, and chosen in **Settings → Widget**. App themes apply in Full Color; Clear and Tinted are system-wide styles in **System Settings → Appearance**.
 - The app rescans shortly after a resume.
 - The App Group uses the team-prefixed macOS convention `67Z29VG25Z.com.devsessions.shared2`; the host and widget declare the same identifier, so sharing works with Apple Development or ad-hoc signing.
 - A Debug-only `scan-status.txt` is written to `~/Library/Application Support/DevSessions` for troubleshooting.

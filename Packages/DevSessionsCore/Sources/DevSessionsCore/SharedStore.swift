@@ -55,4 +55,37 @@ public struct SharedStore: Sendable {
             ofItemAtPath: fileURL.path
         )
     }
+
+    public var widgetThemeURL: URL {
+        directoryURL.appendingPathComponent("widget-theme.json")
+    }
+
+    public func loadWidgetTheme() -> WidgetTheme {
+        guard let data = try? Data(contentsOf: widgetThemeURL),
+              let theme = try? JSONDecoder().decode(
+                  WidgetTheme.self,
+                  from: data
+              ) else {
+            return .midnight
+        }
+        return theme
+    }
+
+    public func saveWidgetTheme(_ theme: WidgetTheme) throws {
+        try FileManager.default.createDirectory(
+            at: directoryURL,
+            withIntermediateDirectories: true
+        )
+        try FileManager.default.setAttributes(
+            [.posixPermissions: 0o700],
+            ofItemAtPath: directoryURL.path
+        )
+
+        let data = try JSONEncoder().encode(theme)
+        try data.write(to: widgetThemeURL, options: .atomic)
+        try FileManager.default.setAttributes(
+            [.posixPermissions: 0o600],
+            ofItemAtPath: widgetThemeURL.path
+        )
+    }
 }

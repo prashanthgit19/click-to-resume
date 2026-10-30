@@ -302,6 +302,14 @@ Pi and Oh My Pi use the same row format with their own agent labels; the example
 - Large: 6–7 most recent sessions.
 - No scrolling. Exact row counts are tuned in Xcode previews against the shipping macOS widget sizes.
 
+### Themes
+
+- The widget theme is global and chosen in **Settings → Widget**: Match System, Midnight, Paper, Graphite, or Coast.
+- The selection is stored in the App Group so the widget extension can read it without a scan.
+- App themes apply in Full Color. macOS Clear and Tinted widget styles are system-wide, render widgets in accented mode, remove the app background, and apply the system glass/tint.
+- Do not paint custom Liquid Glass in the widget content layer; the system provides the glass treatment.
+- Handle `widgetRenderingMode` explicitly for Full Color, Accented, and Vibrant, and keep hierarchy with opacity rather than color in Accented mode.
+
 ### Interaction
 
 - Each session row is a `Link` to `devsessions://resume?agent=<agent>&id=<session-id>`.

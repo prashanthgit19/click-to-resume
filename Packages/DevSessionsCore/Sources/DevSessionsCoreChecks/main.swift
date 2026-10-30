@@ -67,6 +67,21 @@ func runChecks() throws {
         "unsupported agent is shown"
     )
 
+    // Widget theme round trip through the shared store.
+    try store.saveWidgetTheme(.paper)
+    expect(
+        store.loadWidgetTheme() == .paper,
+        "widget theme survives shared-store round trip"
+    )
+    let themeAttributes = try FileManager.default.attributesOfItem(
+        atPath: store.widgetThemeURL.path
+    )
+    let themePermissions = themeAttributes[.posixPermissions] as? NSNumber
+    expect(
+        themePermissions?.intValue == 0o600,
+        "widget theme file is 0600"
+    )
+
     // URL scheme round trip and validation.
     let claudeID = "11111111-1111-4111-8111-111111111111"
     let resumeURL = DeepLink.resumeURL(agent: .claude, sessionID: claudeID)

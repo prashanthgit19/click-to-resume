@@ -5,7 +5,17 @@ import WidgetKit
 
 struct DevSessionsWidgetView: View {
     @Environment(\.widgetFamily) private var family
+    @Environment(\.widgetRenderingMode) private var renderingMode
+    @Environment(\.colorScheme) private var colorScheme
     let entry: DevSessionsEntry
+
+    private var palette: WidgetPalette {
+        WidgetPalette.resolve(
+            theme: entry.theme,
+            colorScheme: colorScheme,
+            renderingMode: renderingMode
+        )
+    }
 
     private var sessions: [AgentSession] {
         let limit: Int
@@ -42,7 +52,7 @@ struct DevSessionsWidgetView: View {
     var body: some View {
         content
             .containerBackground(for: .widget) {
-                WidgetBackground()
+                WidgetBackground(palette: palette)
             }
     }
 
@@ -79,28 +89,30 @@ struct DevSessionsWidgetView: View {
                             session: session,
                             progress: recency(for: session),
                             diameter: 46,
-                            lineWidth: 3
+                            lineWidth: 3,
+                            palette: palette
                         )
 
                         HStack(alignment: .center, spacing: 6) {
                             Text(session.projectName)
                                 .font(.system(size: 15, weight: .semibold))
-                                .foregroundStyle(Theme.primary)
+                                .foregroundStyle(palette.primary)
                                 .lineLimit(1)
                                 .minimumScaleFactor(0.9)
 
                             Spacer(minLength: 4)
 
-                            RedirectArrow(size: 22)
+                            RedirectArrow(palette: palette, size: 22)
                         }
 
                         HStack(spacing: 4) {
                             Text(session.agent.displayName)
-                                .foregroundStyle(session.agent.accent)
+                                .foregroundStyle(palette.accent(for: session.agent))
+                                .widgetAccentable()
                             Text("·")
-                                .foregroundStyle(Theme.tertiary)
+                                .foregroundStyle(palette.tertiary)
                             Text(session.title)
-                                .foregroundStyle(Theme.secondary)
+                                .foregroundStyle(palette.secondary)
                         }
                         .font(.system(size: 10.5, weight: .medium))
                         .lineLimit(1)
@@ -119,11 +131,11 @@ struct DevSessionsWidgetView: View {
                 HStack(spacing: 4) {
                     Text(session.lastActive, style: .relative)
                         .font(.system(size: 10, weight: .medium))
-                        .foregroundStyle(Theme.secondary)
+                        .foregroundStyle(palette.secondary)
                     Spacer(minLength: 4)
                     Text(windowLabel)
                         .font(.system(size: 10, weight: .medium))
-                        .foregroundStyle(Theme.tertiary)
+                        .foregroundStyle(palette.tertiary)
                 }
             } else {
                 Spacer(minLength: 0)
@@ -152,11 +164,12 @@ struct DevSessionsWidgetView: View {
                             ringSize: 30,
                             titleSize: 12.5,
                             subtitleSize: 10,
-                            timeSize: 10
+                            timeSize: 10,
+                            palette: palette
                         )
 
                         if session.cacheKey != sessions.last?.cacheKey {
-                            RowDivider()
+                            RowDivider(palette: palette)
                         }
                     }
                 }
@@ -170,7 +183,7 @@ struct DevSessionsWidgetView: View {
                 Text(windowLabel)
             }
             .font(.system(size: 10, weight: .medium))
-            .foregroundStyle(Theme.tertiary)
+            .foregroundStyle(palette.tertiary)
         }
     }
 
@@ -193,11 +206,12 @@ struct DevSessionsWidgetView: View {
                             ringSize: 26,
                             titleSize: 11.5,
                             subtitleSize: 10,
-                            timeSize: 10
+                            timeSize: 10,
+                            palette: palette
                         )
 
                         if session.cacheKey != sessions.last?.cacheKey {
-                            RowDivider()
+                            RowDivider(palette: palette)
                         }
                     }
                 }
@@ -213,18 +227,19 @@ struct DevSessionsWidgetView: View {
             HStack(alignment: .firstTextBaseline) {
                 Text("Activity")
                     .font(.system(size: 10, weight: .semibold))
-                    .foregroundStyle(Theme.secondary)
+                    .foregroundStyle(palette.secondary)
                 Spacer()
                 Text(windowLabel)
                     .font(.system(size: 10, weight: .medium))
-                    .foregroundStyle(Theme.tertiary)
+                    .foregroundStyle(palette.tertiary)
             }
 
             ActivitySparkline(
                 values: activityValues(),
                 windowLabel: windowLabel,
                 totalSessions: totalSessions,
-                agentCount: agentCount
+                agentCount: agentCount,
+                palette: palette
             )
             .frame(height: 30)
 
@@ -234,7 +249,7 @@ struct DevSessionsWidgetView: View {
                 Text("\(agentCount) agents")
             }
             .font(.system(size: 10, weight: .medium))
-            .foregroundStyle(Theme.tertiary)
+            .foregroundStyle(palette.tertiary)
         }
     }
 
@@ -242,18 +257,18 @@ struct DevSessionsWidgetView: View {
 
     private var header: some View {
         HStack(spacing: 5) {
-            BrandMark(size: 11)
+            BrandMark(palette: palette, size: 11)
 
             Text("DevSessions")
                 .font(.system(size: 10.5, weight: .semibold))
-                .foregroundStyle(Theme.primary)
+                .foregroundStyle(palette.primary)
 
             Spacer(minLength: 4)
 
             Link(destination: DeepLink.settingsURL) {
                 Image(systemName: "gearshape")
                     .font(.system(size: 10, weight: .medium))
-                    .foregroundStyle(Theme.tertiary)
+                    .foregroundStyle(palette.tertiary)
                     .padding(4)
                     .contentShape(Rectangle())
             }
@@ -263,15 +278,15 @@ struct DevSessionsWidgetView: View {
 
     private var emptyState: some View {
         VStack(spacing: 6) {
-            BrandMark(size: 24)
+            BrandMark(palette: palette, size: 24)
 
             Text("No sessions yet")
                 .font(.system(size: 12, weight: .semibold))
-                .foregroundStyle(Theme.primary)
+                .foregroundStyle(palette.primary)
 
             Text("Open DevSessions to scan.")
                 .font(.system(size: 10, weight: .medium))
-                .foregroundStyle(Theme.secondary)
+                .foregroundStyle(palette.secondary)
         }
         .frame(maxWidth: .infinity)
     }
@@ -316,6 +331,7 @@ private struct SessionRow: View {
     let titleSize: CGFloat
     let subtitleSize: CGFloat
     let timeSize: CGFloat
+    let palette: WidgetPalette
 
     var body: some View {
         Link(
@@ -329,22 +345,24 @@ private struct SessionRow: View {
                     session: session,
                     progress: progress,
                     diameter: ringSize,
-                    lineWidth: max(2, ringSize * 0.075)
+                    lineWidth: max(2, ringSize * 0.075),
+                    palette: palette
                 )
 
                 VStack(alignment: .leading, spacing: 1.5) {
                     Text(session.projectName)
                         .font(.system(size: titleSize, weight: .semibold))
-                        .foregroundStyle(Theme.primary)
+                        .foregroundStyle(palette.primary)
                         .lineLimit(1)
 
                     HStack(spacing: 3) {
                         Text(session.agent.displayName)
-                            .foregroundStyle(session.agent.accent)
+                            .foregroundStyle(palette.accent(for: session.agent))
+                            .widgetAccentable()
                         Text("·")
-                            .foregroundStyle(Theme.tertiary)
+                            .foregroundStyle(palette.tertiary)
                         Text(session.title)
-                            .foregroundStyle(Theme.secondary)
+                            .foregroundStyle(palette.secondary)
                     }
                     .font(.system(size: subtitleSize, weight: .medium))
                     .lineLimit(1)
@@ -355,11 +373,14 @@ private struct SessionRow: View {
                 HStack(spacing: 6) {
                     Text(session.lastActive, style: .relative)
                         .font(.system(size: timeSize, weight: .medium))
-                        .foregroundStyle(Theme.secondary)
+                        .foregroundStyle(palette.secondary)
                         .lineLimit(1)
                         .multilineTextAlignment(.trailing)
 
-                    RedirectArrow(size: ringSize > 28 ? 20 : 18)
+                    RedirectArrow(
+                        palette: palette,
+                        size: ringSize > 28 ? 20 : 18
+                    )
                 }
             }
             .padding(.vertical, ringSize > 30 ? 7 : 5)
@@ -375,9 +396,11 @@ private struct SessionRow: View {
 }
 
 private struct RowDivider: View {
+    let palette: WidgetPalette
+
     var body: some View {
         Rectangle()
-            .fill(Theme.separator)
+            .fill(palette.separator)
             .frame(height: 0.5)
             .padding(.leading, 35)
     }
@@ -390,19 +413,20 @@ private struct SessionRing: View {
     let progress: Double
     let diameter: CGFloat
     let lineWidth: CGFloat
+    let palette: WidgetPalette
 
     var body: some View {
         ZStack {
             Circle()
-                .stroke(Theme.ringTrack, lineWidth: lineWidth)
+                .stroke(palette.ringTrack, lineWidth: lineWidth)
 
             Circle()
                 .trim(from: 0, to: max(0.02, min(1, progress)))
                 .stroke(
                     AngularGradient(
                         colors: [
-                            session.agent.accent.opacity(0.35),
-                            session.agent.accent
+                            palette.accent(for: session.agent).opacity(0.35),
+                            palette.accent(for: session.agent)
                         ],
                         center: .center
                     ),
@@ -412,6 +436,7 @@ private struct SessionRing: View {
                     )
                 )
                 .rotationEffect(.degrees(-90))
+                .widgetAccentable()
 
             Text(session.agent.monogram)
                 .font(
@@ -421,7 +446,8 @@ private struct SessionRing: View {
                         design: .rounded
                     )
                 )
-                .foregroundStyle(session.agent.accent)
+                .foregroundStyle(palette.accent(for: session.agent))
+                .widgetAccentable()
         }
         .frame(width: diameter, height: diameter)
         .accessibilityHidden(true)
@@ -431,6 +457,7 @@ private struct SessionRing: View {
 // MARK: - Brand mark
 
 private struct BrandMark: View {
+    let palette: WidgetPalette
     let size: CGFloat
 
     var body: some View {
@@ -439,7 +466,7 @@ private struct BrandMark: View {
                 .trim(from: 0, to: 0.86)
                 .stroke(
                     LinearGradient(
-                        colors: [Theme.violet, Theme.rose],
+                        colors: [palette.brandStart, palette.brandEnd],
                         startPoint: .topLeading,
                         endPoint: .bottomTrailing
                     ),
@@ -449,14 +476,16 @@ private struct BrandMark: View {
                     )
                 )
                 .rotationEffect(.degrees(-20))
+                .widgetAccentable()
 
             Circle()
-                .fill(Theme.peach)
+                .fill(palette.brandDot)
                 .frame(
                     width: max(2.4, size * 0.22),
                     height: max(2.4, size * 0.22)
                 )
                 .offset(x: size * 0.34, y: -size * 0.34)
+                .widgetAccentable()
         }
         .frame(width: size, height: size)
         .accessibilityHidden(true)
@@ -466,15 +495,17 @@ private struct BrandMark: View {
 // MARK: - Redirect arrow
 
 private struct RedirectArrow: View {
+    let palette: WidgetPalette
     let size: CGFloat
 
     var body: some View {
         Image(systemName: "arrow.up.right")
             .font(.system(size: size * 0.42, weight: .bold))
-            .foregroundStyle(Theme.primary.opacity(0.92))
+            .foregroundStyle(palette.primary.opacity(0.92))
             .frame(width: size, height: size)
-            .background(Circle().fill(Color.white.opacity(0.09)))
-            .overlay(Circle().stroke(Theme.separator, lineWidth: 0.5))
+            .background(Circle().fill(palette.arrowBackground))
+            .overlay(Circle().stroke(palette.separator, lineWidth: 0.5))
+            .widgetAccentable()
             .accessibilityHidden(true)
     }
 }
@@ -486,6 +517,7 @@ private struct ActivitySparkline: View {
     let windowLabel: String
     let totalSessions: Int
     let agentCount: Int
+    let palette: WidgetPalette
 
     var body: some View {
         GeometryReader { proxy in
@@ -499,14 +531,14 @@ private struct ActivitySparkline: View {
                         to: CGPoint(x: size.width, y: size.height - 0.5)
                     )
                 }
-                .stroke(Theme.separator, lineWidth: 0.5)
+                .stroke(palette.separator, lineWidth: 0.5)
 
                 areaPath(points, in: size)
                     .fill(
                         LinearGradient(
                             colors: [
-                                Theme.violet.opacity(0.30),
-                                Theme.rose.opacity(0.02)
+                                palette.chartStart.opacity(0.30),
+                                palette.chartEnd.opacity(0.02)
                             ],
                             startPoint: .top,
                             endPoint: .bottom
@@ -516,7 +548,7 @@ private struct ActivitySparkline: View {
                 linePath(points)
                     .stroke(
                         LinearGradient(
-                            colors: [Theme.violet, Theme.rose],
+                            colors: [palette.chartStart, palette.chartEnd],
                             startPoint: .leading,
                             endPoint: .trailing
                         ),
@@ -528,7 +560,7 @@ private struct ActivitySparkline: View {
                     )
 
                 Circle()
-                    .fill(Theme.rose)
+                    .fill(palette.chartEnd)
                     .frame(width: 3.2, height: 3.2)
                     .position(points.last ?? .zero)
             }
@@ -594,63 +626,43 @@ private struct ActivitySparkline: View {
     }
 }
 
-// MARK: - Theme
-
-private enum Theme {
-    static let primary = Color(hex: 0xF7F3FC)
-    static let secondary = Color(hex: 0xC2B7D0)
-    static let tertiary = Color(hex: 0x9E92AD)
-    static let separator = Color.white.opacity(0.08)
-    static let ringTrack = Color.white.opacity(0.10)
-    static let violet = Color(hex: 0x9B8CFF)
-    static let rose = Color(hex: 0xF3A6C8)
-    static let peach = Color(hex: 0xFFC29B)
-}
+// MARK: - Background
 
 private struct WidgetBackground: View {
+    let palette: WidgetPalette
+
     var body: some View {
-        ZStack {
-            LinearGradient(
-                colors: [Color(hex: 0x1A1128), Color(hex: 0x28163A)],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
+        if palette.isTransparent {
+            Color.clear
+        } else {
+            ZStack {
+                LinearGradient(
+                    colors: palette.background,
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
 
-            RadialGradient(
-                colors: [Color(hex: 0x8B5CF6).opacity(0.22), .clear],
-                center: .topTrailing,
-                startRadius: 0,
-                endRadius: 220
-            )
+                RadialGradient(
+                    colors: [palette.glow.opacity(0.22), .clear],
+                    center: .topTrailing,
+                    startRadius: 0,
+                    endRadius: 220
+                )
 
-            RadialGradient(
-                colors: [Color(hex: 0xE879B9).opacity(0.10), .clear],
-                center: .bottomLeading,
-                startRadius: 0,
-                endRadius: 180
-            )
+                RadialGradient(
+                    colors: [palette.glowSecondary.opacity(0.10), .clear],
+                    center: .bottomLeading,
+                    startRadius: 0,
+                    endRadius: 180
+                )
+            }
         }
     }
 }
 
-// MARK: - Agent identity
+// MARK: - Agent monogram
 
 private extension AgentKind {
-    var accent: Color {
-        switch self {
-        case .opencode:
-            return Color(hex: 0xB4A7FF)
-        case .claude:
-            return Color(hex: 0xFFC29B)
-        case .codex:
-            return Color(hex: 0x8BE8D6)
-        case .pi:
-            return Color(hex: 0xFFE08A)
-        case .omp:
-            return Color(hex: 0xF5A8C8)
-        }
-    }
-
     var monogram: String {
         switch self {
         case .opencode:
@@ -664,17 +676,5 @@ private extension AgentKind {
         case .omp:
             return "Ω"
         }
-    }
-}
-
-private extension Color {
-    init(hex: UInt32) {
-        self.init(
-            .sRGB,
-            red: Double((hex >> 16) & 0xFF) / 255,
-            green: Double((hex >> 8) & 0xFF) / 255,
-            blue: Double(hex & 0xFF) / 255,
-            opacity: 1
-        )
     }
 }

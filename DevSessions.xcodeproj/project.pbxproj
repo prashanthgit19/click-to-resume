@@ -19,6 +19,7 @@
 		7CE429C1E1953FC0CAB2D396 /* TerminalLauncher.swift in Sources */ = {isa = PBXBuildFile; fileRef = 397EAC1ACACC75B07364657E /* TerminalLauncher.swift */; };
 		84E5F534FD96010E40731888 /* DevSessionsCore in Frameworks */ = {isa = PBXBuildFile; productRef = 8FEDF3DE58F0D7A367BFA807 /* DevSessionsCore */; };
 		966B95759F8BA23703B41FCB /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 344A400BA60D14AF6C862F55 /* SettingsView.swift */; };
+		98F61994CFCC6FDEF86ED4B7 /* WidgetPalette.swift in Sources */ = {isa = PBXBuildFile; fileRef = E133AC13CB0EFA7DCDC3F8ED /* WidgetPalette.swift */; };
 		A9E815B070C8A9ACA811F155 /* DevSessionsApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 958833A2FAF5C3AE8BC77217 /* DevSessionsApp.swift */; };
 		D41E131CE98CDB7659AA4DBE /* Phase0View.swift in Sources */ = {isa = PBXBuildFile; fileRef = C921711CBE281BC785894089 /* Phase0View.swift */; };
 		DCE00F8251AB64F5AB9B90FE /* AgentExecutableResolver.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2D606A8C988A20BBA6AAF9EA /* AgentExecutableResolver.swift */; };
@@ -65,6 +66,7 @@
 		B00FC8BAAD089878D01CCAF6 /* DevSessionsCore */ = {isa = PBXFileReference; lastKnownFileType = folder; name = DevSessionsCore; path = Packages/DevSessionsCore; sourceTree = SOURCE_ROOT; };
 		C19A12CCDFFC4DC30EB4991E /* DevSessionsWidgetBundle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DevSessionsWidgetBundle.swift; sourceTree = "<group>"; };
 		C921711CBE281BC785894089 /* Phase0View.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Phase0View.swift; sourceTree = "<group>"; };
+		E133AC13CB0EFA7DCDC3F8ED /* WidgetPalette.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WidgetPalette.swift; sourceTree = "<group>"; };
 		E42F55A3388C0096186A23BF /* DevSessionsWidgetView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DevSessionsWidgetView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -103,6 +105,7 @@
 				AA83EED087223F52349CC956 /* DevSessionsWidget.swift */,
 				C19A12CCDFFC4DC30EB4991E /* DevSessionsWidgetBundle.swift */,
 				E42F55A3388C0096186A23BF /* DevSessionsWidgetView.swift */,
+				E133AC13CB0EFA7DCDC3F8ED /* WidgetPalette.swift */,
 			);
 			path = DevSessionsWidget;
 			sourceTree = "<group>";
@@ -273,6 +276,7 @@
 				120733B4963C8C0C9003CA08 /* DevSessionsWidget.swift in Sources */,
 				48BBD51AFFBA4EC75BAE013C /* DevSessionsWidgetBundle.swift in Sources */,
 				25A20F8EFCB7E99B38535B8A /* DevSessionsWidgetView.swift in Sources */,
+				98F61994CFCC6FDEF86ED4B7 /* WidgetPalette.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
