@@ -108,6 +108,21 @@ enum TerminalLauncher {
     }
 
     private static func launchGhostty(_ scriptURL: URL, _ applicationURL: URL) throws {
+        // Reuse the running instance so resumes do not add a second Dock icon.
+        // When Ghostty is not running, its normal launch path is simpler and
+        // avoids the Automation prompt.
+        let isRunning = !NSRunningApplication
+            .runningApplications(withBundleIdentifier: "com.mitchellh.ghostty")
+            .isEmpty
+
+        if isRunning {
+            try newGhosttyWindow(scriptURL)
+        } else {
+            try launchGhosttyProcess(scriptURL, applicationURL)
+        }
+    }
+
+    private static func launchGhosttyProcess(_ scriptURL: URL, _ applicationURL: URL) throws {
         let process = Process()
         process.executableURL = URL(fileURLWithPath: "/usr/bin/open")
         process.arguments = [
@@ -136,5 +151,44 @@ enum TerminalLauncher {
                 message.isEmpty ? "open exited with status \(process.terminationStatus)" : message
             )
         }
+    }
+
+    private static func newGhosttyWindow(_ scriptURL: URL) throws {
+        let source = """
+        tell application id "com.mitchellh.ghostty"
+            set cfg to new surface configuration
+            set command of cfg to "\(appleScriptLiteral(scriptURL.path))"
+            new window with configuration cfg
+        end tell
+        """
+
+        guard let appleScript = NSAppleScript(source: source) else {
+            throw TerminalLauncherError.launchFailed(
+                "Could not create the Ghostty AppleScript."
+            )
+        }
+
+        var error: NSDictionary?
+        appleScript.executeAndReturnError(&error)
+
+        guard let error else { return }
+
+        if (error[NSAppleScript.errorNumber] as? Int) == -1743 {
+            throw TerminalLauncherError.launchFailed(
+                "DevSessions needs permission to control Ghostty. "
+                    + "Allow it in System Settings → Privacy & Security → Automation."
+            )
+        }
+
+        throw TerminalLauncherError.launchFailed(
+            error[NSAppleScript.errorMessage] as? String
+                ?? "Ghostty did not accept the new-window request."
+        )
+    }
+
+    private static func appleScriptLiteral(_ value: String) -> String {
+        value
+            .replacingOccurrences(of: "\\", with: "\\\\")
+            .replacingOccurrences(of: "\"", with: "\\\"")
     }
 }

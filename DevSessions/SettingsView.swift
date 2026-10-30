@@ -111,7 +111,7 @@ struct SettingsView: View {
                 }
 
                 if terminal.selected == .ghostty {
-                    Text("Ghostty opens a new Ghostty instance for each resume.")
+                    Text("Ghostty opens a new window in the running instance. macOS asks once for Automation approval.")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }

@@ -49,7 +49,7 @@ Phases 0–2 are runtime-validated on this Mac:
 - The host app scans real data and reports **200 cached sessions** on this machine.
 - The widget was re-registered from the Phase 2.1 app.
 - The widget list is a flat global recency order: no per-agent sections, quotas, or fairness rules.
-- Ghostty 1.3.1 is installed, and its `open -na ... --command` resume path was exercised with a real cached session.
+- Ghostty 1.3.1 is installed, and its new-window scripting path was exercised with a real cached session.
 - Terminal.app resume was exercised with the same real session. A global Terminal/Ghostty preference is stored app-side.
 - `make verify` passes: core checks, plist lint, host/widget type checks, and the five-agent fixture suite.
 
@@ -156,7 +156,7 @@ LICENSE                   MIT license
 - Only the global top 200 sessions by last activity are cached, with no per-agent quota. A heavily used agent naturally fills the top rows.
 - The widget reads a single `state.json` from the App Group. The host app writes it atomically with owner-only permissions.
 - Resume validates the session against the cache, checks the project directory, resolves the CLI to an absolute path, writes an executable script, and opens it in the globally selected terminal.
-- **Terminal.app** is the default. **Ghostty** is available when installed and opens a new Ghostty instance per resume.
+- **Terminal.app** is the default. **Ghostty** is available when installed and opens a new window in the running instance; macOS asks once for Automation approval.
 - The terminal choice is global for all sessions, stored app-side; the widget always deep-links back to DevSessions first.
 - The app rescans shortly after a resume.
 - The App Group uses the team-prefixed macOS convention `67Z29VG25Z.com.devsessions.shared2`; the host and widget declare the same identifier, so sharing works with Apple Development or ad-hoc signing.
@@ -209,7 +209,7 @@ The workflow needs no secrets. Add Developer ID and notarization secrets later i
 
 - Optional: Developer ID signing and notarization (requires the paid Apple Developer Program) to remove the first-launch approval step.
 - Final clean-install test on a second Mac or user account.
-- Pi and Oh My Pi still need one real session each for live end-to-end validation. Their adapters are fixture-tested and installed. Ghostty's no-Automation launch path is verified; AppleScript window reuse remains future work.
+- Pi and Oh My Pi still need one real session each for live end-to-end validation. Their adapters are fixture-tested and installed. Ghostty's new-window scripting path is verified.
 
 The Phase 3 widget redesign is parked locally on the `phase3-attempt` branch. The shipping widget is the working Phase 2.1 layout; the Phase 3 work should be reintroduced incrementally later.
 
