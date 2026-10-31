@@ -8,7 +8,7 @@ See `prd.txt` for the full product requirements and `PRIVACY.md` for the local-d
 
 ## Install
 
-Download the latest DMG from [Releases](https://github.com/prashanthgit19/click-to-resume/releases).
+Download the latest DMG from [Releases](https://github.com/prashanthgit19/devsessions/releases).
 
 Public builds are ad-hoc signed, not notarized. macOS blocks the first launch until you approve it:
 
